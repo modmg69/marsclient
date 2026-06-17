@@ -17,16 +17,16 @@ BASE_COSMETIC_FOLDER = 'static/cosmetics'
 TEAM_FOLDER = 'static/team'
 ALLOWED_EXTENSIONS = {'png', 'gif', 'jpg', 'jpeg', 'webp'}
 
-# ========== ایجاد فولدر تیم و فایل‌های پیش‌فرض ==========
+# ========== ایجاد فولدر تیم ==========
 def create_team_folder():
     os.makedirs(TEAM_FOLDER, exist_ok=True)
     team_members = [
-        {'name': 'پارسا', 'role': 'بنیان‌گذار و توسعه‌دهنده ارشد', 'username': '@modmg69', 'badge': 'بنیان‌گذار', 'icon': '🚀', 'file': 'پارسا_بنیان_گذار.png'},
-        {'name': 'حسین', 'role': 'مدیریت تیم', 'username': '@seet', 'badge': 'مدیر تیم', 'icon': '📊', 'file': 'حسین_مدیر_تیم.png'},
-        {'name': 'محمد رضا', 'role': 'پشتیبانی', 'username': '@MohammadReza23', 'badge': 'پشتیبانی', 'icon': '🛡️', 'file': 'محمد_رضا_پشتیبانی.png'},
-        {'name': 'محمد صادق', 'role': 'پشتیبانی', 'username': '@MohammadSadiq', 'badge': 'پشتیبانی', 'icon': '🎧', 'file': 'محمد_صادق_پشتیبانی.png'},
-        {'name': 'پارسا', 'role': 'طراح لانچر', 'username': '@parsa_design', 'badge': 'طراح لانچر', 'icon': '🎨', 'file': 'پارسا_طراح_لانچر.png'},
-        {'name': 'سامان', 'role': 'دیزاین کلاینت', 'username': '@saman_design', 'badge': 'دیزاینر', 'icon': '✨', 'file': 'سامان_دیزاین_کلاینت.png'}
+        {'name': 'پارسا', 'role': 'بنیان‌گذار و توسعه‌دهنده ارشد', 'username': '@modmg69', 'badge': 'بنیان‌گذار', 'icon': '🚀', 'file': 'پارسا_بنیان_گذار.png', 'status': 'online'},
+        {'name': 'حسین', 'role': 'مدیریت تیم', 'username': '@seet', 'badge': 'مدیر تیم', 'icon': '📊', 'file': 'حسین_مدیر_تیم.png', 'status': 'online'},
+        {'name': 'محمد رضا', 'role': 'پشتیبانی', 'username': '@MohammadReza23', 'badge': 'پشتیبانی', 'icon': '🛡️', 'file': 'محمد_رضا_پشتیبانی.png', 'status': 'online'},
+        {'name': 'محمد صادق', 'role': 'پشتیبانی', 'username': '@MohammadSadiq', 'badge': 'پشتیبانی', 'icon': '🎧', 'file': 'محمد_صادق_پشتیبانی.png', 'status': 'online'},
+        {'name': 'پارسا', 'role': 'طراح لانچر', 'username': '@Parsa__6780393', 'badge': 'طراح لانچر', 'icon': '🎨', 'file': 'پارسا_طراح_لانچر.png', 'status': 'online'},
+        {'name': 'سامان', 'role': 'دیزاین کلاینت', 'username': '@saman_design', 'badge': 'دیزاینر', 'icon': '✨', 'file': 'سامان_دیزاین_کلاینت.png', 'status': 'online'}
     ]
     info_path = os.path.join(TEAM_FOLDER, 'team_info.json')
     if not os.path.exists(info_path):
@@ -37,26 +37,11 @@ def create_team_folder():
         if not os.path.exists(file_path):
             with open(file_path, 'wb') as f:
                 f.write(b'')
-    index_path = os.path.join(TEAM_FOLDER, 'index.html')
-    if not os.path.exists(index_path):
-        with open(index_path, 'w', encoding='utf-8') as f:
-            f.write('''<!DOCTYPE html>
-<html dir="rtl">
-<head><meta charset="UTF-8"><title>تیم توسعه‌دهندگان</title></head>
-<body style="font-family:Vazirmatn;text-align:center;padding:50px;background:#f97316;color:white;">
-<h1>🚀 تیم توسعه‌دهندگان MarsClient</h1>
-<ul style="list-style:none;padding:0;">
-''')
-            for member in team_members:
-                f.write(f'<li style="margin:10px;">📷 {member["name"]} - {member["role"]} - {member["file"]}</li>\n')
-            f.write('''</ul>
-</body>
-</html>''')
     return team_members
 
 TEAM_MEMBERS = create_team_folder()
 
-# ---------- Online Players System ----------
+# ---------- Online Players ----------
 active_sessions = {}
 sessions_lock = threading.Lock()
 SESSION_TIMEOUT = 60
@@ -102,7 +87,7 @@ def leave():
             active_sessions.pop(session_id, None)
     return jsonify({'success': True})
 
-# ---------- Zarinpal Settings ----------
+# ---------- Zarinpal ----------
 MERCHANT_ID = "11111111-1111-1111-1111-111111111111"
 ZARINPAL_REQUEST_URL = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 ZARINPAL_VERIFY_URL = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
@@ -594,6 +579,10 @@ body {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
+@keyframes countUp {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+}
 
 .animate-fade-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards; }
 .animate-fade-scale { animation: fadeInScale 0.6s ease-out forwards; }
@@ -609,6 +598,7 @@ body {
 .animate-pulse { animation: pulse 2s ease-in-out infinite; }
 .animate-wave { animation: wave 2s ease-in-out infinite; }
 .animate-blink { animation: blink 1.5s ease-in-out infinite; }
+.animate-count { animation: countUp 0.3s ease forwards; }
 
 .scroll-animate {
     opacity: 0;
@@ -934,7 +924,6 @@ body {
     font-size: 3rem;
     color: white;
     transition: all 0.3s ease;
-    animation: float 3s ease-in-out infinite;
     background: var(--gradient);
     overflow: hidden;
 }
@@ -979,6 +968,27 @@ body {
     font-size: 0.7rem;
     font-weight: 700;
 }
+.team-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    margin-top: 5px;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+.team-status.online {
+    color: var(--online-green);
+    background: rgba(34, 197, 94, 0.1);
+}
+.status-dot-online {
+    width: 6px;
+    height: 6px;
+    background-color: var(--online-green);
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+}
+
 .stats-section {
     background: linear-gradient(135deg, var(--orange-soft) 0%, #fff5eb 100%);
     border-radius: 48px;
@@ -1464,9 +1474,7 @@ footer {
 }
 """
 
-# ===================== تمام تمپلیت‌ها =====================
-
-# LOGIN_TEMPLATE (خلاصه شده)
+# ===================== LOGIN_TEMPLATE =====================
 LOGIN_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ورود / ثبت نام | MarsClient</title><style>{{ styles | safe }}</style></head>
@@ -1504,7 +1512,7 @@ LOGIN_TEMPLATE = """<!DOCTYPE html>
 </div>
 </section>
 
-<footer><div class="footer-content"><div class="footer-stats"><div class="footer-stat"><div class="footer-stat-value animate-glow">۵۰۰+</div><div class="footer-stat-label">دانلود فعال</div></div><div class="footer-stat"><div class="footer-stat-value">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div><div class="footer-stat"><div class="footer-stat-value">۳۵+</div><div class="footer-stat-label">ماژول داخلی</div></div></div><div class="footer-copyright">© ۲۰۲۶ MarsClient — نسل بعدی موتور ماینکرفت</div></div></footer>
+<footer><div class="footer-content"><div class="footer-stats"><div class="footer-stat"><div class="footer-stat-value animate-glow">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div><div class="footer-stat"><div class="footer-stat-value">۴۰+</div><div class="footer-stat-label">ماژول داخلی</div></div></div><div class="footer-copyright">© ۲۰۲۶ MarsClient — نسل بعدی موتور ماینکرفت</div></div></footer>
 
 <div class="faq-widget">
     <button class="faq-button" onclick="toggleFaq()">❓</button>
@@ -1679,7 +1687,7 @@ function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.
 </body>
 </html>"""
 
-# HOME_TEMPLATE
+# ===================== HOME_TEMPLATE =====================
 HOME_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MarsClient | صفحه اصلی</title><style>{{ styles | safe }}</style></head>
@@ -1727,19 +1735,26 @@ HOME_TEMPLATE = """<!DOCTYPE html>
 
 <section class="stats-section">
     <div class="stats-grid">
-        <div class="stat-item scroll-animate"><div class="stat-number">۵۰۰+</div><div class="stat-label">دانلود فعال</div></div>
-        <div class="stat-item scroll-animate"><div class="stat-number">۴.۹</div><div class="stat-label">امتیاز کاربران</div></div>
-        <div class="stat-item scroll-animate"><div class="stat-number">۳۰۰۰+</div><div class="stat-label">حداکثر FPS</div></div>
-        <div class="stat-item scroll-animate"><div class="stat-number">۳۵+</div><div class="stat-label">ماژول داخلی</div></div>
+        <div class="stat-item scroll-animate">
+            <div class="stat-number" id="fpsCounter">0</div>
+            <div class="stat-label">حداکثر FPS</div>
+        </div>
+        <div class="stat-item scroll-animate">
+            <div class="stat-number" id="ratingCounter">0</div>
+            <div class="stat-label">امتیاز کاربران</div>
+        </div>
+        <div class="stat-item scroll-animate">
+            <div class="stat-number" id="modulesCounter">0</div>
+            <div class="stat-label">ماژول داخلی</div>
+        </div>
     </div>
 </section>
 
 <footer>
     <div class="footer-content">
         <div class="footer-stats">
-            <div class="footer-stat"><div class="footer-stat-value animate-glow">۵۰۰+</div><div class="footer-stat-label">دانلود فعال</div></div>
             <div class="footer-stat"><div class="footer-stat-value">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
-            <div class="footer-stat"><div class="footer-stat-value">۳۵+</div><div class="footer-stat-label">ماژول داخلی</div></div>
+            <div class="footer-stat"><div class="footer-stat-value">۴۰+</div><div class="footer-stat-label">ماژول داخلی</div></div>
         </div>
         <div class="footer-copyright">© ۲۰۲۶ MarsClient — نسل بعدی موتور ماینکرفت</div>
     </div>
@@ -1784,6 +1799,7 @@ async function loadTeamMembers() {
         const container = document.getElementById('teamGrid');
         let html = '';
         members.forEach((member, index) => {
+            const isOnline = member.status === 'online';
             html += `
                 <div class="team-card scroll-animate" style="animation-delay: ${index * 0.1}s">
                     <div class="team-badge">${member.badge}</div>
@@ -1793,6 +1809,10 @@ async function loadTeamMembers() {
                     <div class="team-name">${member.name}</div>
                     <div class="team-role">${member.role}</div>
                     <div class="team-username">${member.username}</div>
+                    <div class="team-status online">
+                        <span class="status-dot-online"></span>
+                        آنلاین
+                    </div>
                 </div>
             `;
         });
@@ -1811,6 +1831,56 @@ async function loadTeamMembers() {
     }
 }
 loadTeamMembers();
+
+// ===== انیمیشن شمارش ۳ عدد =====
+function animateCounter(elementId, target, suffix = '') {
+    const counter = document.getElementById(elementId);
+    if (!counter) return;
+    
+    const duration = 2000;
+    const startTime = performance.now();
+    let current = 0;
+    
+    function updateCounter(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 1.5);
+        current = Math.floor(eased * target);
+        
+        if (target === 4.9) {
+            counter.textContent = (current / 10).toFixed(1);
+        } else {
+            counter.textContent = current.toLocaleString('en-US');
+        }
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+        } else {
+            if (target === 4.9) {
+                counter.textContent = '4.9';
+            } else {
+                counter.textContent = target.toLocaleString('en-US') + suffix;
+            }
+        }
+    }
+    
+    setTimeout(() => {
+        requestAnimationFrame(updateCounter);
+    }, 300);
+}
+
+const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            animateCounter('fpsCounter', 3000, '+');
+            animateCounter('ratingCounter', 4.9);
+            animateCounter('modulesCounter', 40, '+');
+            statsObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.stats-section').forEach(el => statsObserver.observe(el));
 
 const observerOptions = { threshold: 0.2, rootMargin: '0px 0px -50px 0px' };
 const observer = new IntersectionObserver((entries) => {
@@ -1897,21 +1967,312 @@ function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.
 </body>
 </html>"""
 
-# SHOP_TEMPLATE و CART_TEMPLATE به دلیل طولانی شدن حذف شده‌اند اما در کد کامل وجود دارند
-# برای جلوگیری از خطا، مسیرهای آنها را به HOME متصل می‌کنیم
+# ===================== SHOP_TEMPLATE (فروشگاه کامل) =====================
+SHOP_TEMPLATE = """<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>فروشگاه | MarsClient</title><style>{{ styles | safe }}</style></head>
+<body>
+<nav class="navbar"><a href="/" class="logo animate-float">MarsClient</a>
+<div class="nav-links" id="navLinks">
+<div class="online-badge"><span class="online-dot"></span> آنلاین: <span class="online-number" id="onlineCount">0</span> نفر</div>
+<a href="/">خانه</a>
+<a href="/shop" class="active">فروشگاه</a>
+<a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+<a href="/cart" class="cart-icon" id="cartLink" style="display: none;">🛒 <span id="cartCount">0</span></a>
+<div id="authSection" style="display: flex; gap: 12px;"></div>
+</div></nav>
 
+<div id="downloadModal" class="modal"><div class="modal-content"><span class="close" onclick="closeDownloadModal()">&times;</span><div class="download-modal-icon">🔧</div><div class="download-modal-text">کلاینت در حال ساخت است</div><div class="download-modal-sub">به زودی منتشر می‌شود!</div></div></div>
+
+<section class="section" style="padding-top: 120px;">
+    <div style="text-align:center; margin-bottom:30px;">
+        <h1 style="font-size:2.8rem; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:800;">فروشگاه MarsClient</h1>
+        <p style="color:var(--text-soft); margin-top:10px;">کازمتیک‌های اختصاصی برای شخصی‌سازی تجربه بازی شما</p>
+    </div>
+    <div class="category-menu" id="categoryMenu"></div>
+    <div id="cosmeticsContainer" class="grid" style="margin-top:30px;">
+        <div style="text-align:center;width:100%;">در حال بارگذاری محصولات...</div>
+    </div>
+</section>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-stats">
+            <div class="footer-stat"><div class="footer-stat-value">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
+            <div class="footer-stat"><div class="footer-stat-value">۴۰+</div><div class="footer-stat-label">ماژول داخلی</div></div>
+        </div>
+        <div class="footer-copyright">© ۲۰۲۶ MarsClient — نسل بعدی موتور ماینکرفت</div>
+    </div>
+</footer>
+
+<div class="faq-widget">
+    <button class="faq-button" onclick="toggleFaq()">❓</button>
+    <div class="faq-panel" id="faqPanel">
+        <div class="faq-header">
+            <button id="faqTabBtn" class="faq-tab active">❓ سوالات متداول</button>
+            <button id="supportTabBtn" class="faq-tab">📞 پشتیبانی</button>
+            <button class="faq-close" onclick="toggleFaq()">✖</button>
+        </div>
+        <div id="faqContent" class="faq-content"></div>
+    </div>
+</div>
+
+<script>
+let sessionId = localStorage.getItem('marsclient_session');
+if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
+function sendHeartbeat() { fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) }).then(r=>r.json()).then(data=>{ if(data.online_count!==undefined) document.getElementById('onlineCount').innerText=data.online_count; }).catch(e=>console.warn); }
+function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); }
+window.addEventListener('beforeunload', sendLeave);
+sendHeartbeat(); setInterval(sendHeartbeat, 20000);
+
+function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
+function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
+window.onclick = function(event) { const modal = document.getElementById('downloadModal'); if (event.target == modal) modal.style.display='none'; }
+
+async function refreshAuthUI() {
+    const res = await fetch('/api/me'); const data = await res.json(); const authDiv = document.getElementById('authSection'); const cartLink = document.getElementById('cartLink');
+    if(data.logged_in) { authDiv.innerHTML = `<span style="color:var(--orange-primary); font-weight:600;">${data.username}</span> <button id="logoutBtn" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; border:none; cursor:pointer; font-weight:600;">خروج</button>`; document.getElementById('logoutBtn')?.addEventListener('click', async () => { await fetch('/api/logout', {method:'POST'}); window.location.reload(); }); cartLink.style.display = 'inline-block'; updateCartUI(); }
+    else { authDiv.innerHTML = `<a href="/login" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; text-decoration:none; font-weight:600;">ورود</a>`; cartLink.style.display = 'none'; }
+}
+async function updateCartUI() { const res = await fetch('/api/cart').catch(()=>{}); if(res && res.ok) { const data = await res.json(); document.getElementById('cartCount').innerText = data.item_count || 0; } }
+refreshAuthUI();
+
+function addToCart(item) {
+    fetch('/api/cart/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(item) })
+    .then(r=>{ if(r.status===401) { alert('لطفاً وارد شوید'); window.location.href='/login'; return; } return r.json(); })
+    .then(data => { if(data && data.success) { updateCartUI(); alert(`${item.name} به سبد خرید اضافه شد`); } })
+    .catch(err=>console.error);
+}
+
+let allCosmetics = {};
+async function loadCosmetics() {
+    try {
+        const res = await fetch('/api/cosmetics');
+        allCosmetics = await res.json();
+        buildCategoryMenu();
+        let firstCat = Object.keys(allCosmetics).find(key => allCosmetics[key].length > 0);
+        if (firstCat) showCategory(firstCat);
+        else document.getElementById('cosmeticsContainer').innerHTML = '<div style="text-align:center;">هیچ محصولی یافت نشد</div>';
+    } catch(e) { console.error(e); }
+}
+
+function buildCategoryMenu() {
+    const menuDiv = document.getElementById('categoryMenu');
+    let html = '';
+    for (const [key, items] of Object.entries(allCosmetics)) {
+        if (items.length === 0) continue;
+        html += `<button class="category-btn" data-cat="${key}">${getCategoryPersianName(key)}</button>`;
+    }
+    menuDiv.innerHTML = html;
+    document.querySelectorAll('.category-btn').forEach(btn => btn.addEventListener('click', () => {
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showCategory(btn.dataset.cat);
+    }));
+}
+
+function getCategoryPersianName(key) {
+    const names = { 'pets':'حیوانات خانگی', 'glasses':'عینک', 'hats':'کلاه', 'masks':'ماسک', 'wings':'بال', 'capes':'شنل', 'bag':'کیف', 'necklace':'گردنبند' };
+    return names[key] || key;
+}
+
+function showCategory(categoryKey) {
+    let items = allCosmetics[categoryKey] || [];
+    const container = document.getElementById('cosmeticsContainer');
+    if (!items.length) { container.innerHTML = '<div style="text-align:center;">هیچ آیتمی در این دسته وجود ندارد</div>'; return; }
+    let html = '';
+    for (const item of items) {
+        let priceFormatted = item.price.toLocaleString();
+        let oldPrice = (item.price * 1.5).toLocaleString();
+        html += `<div class="cosmetic-card">
+            <div class="cosmetic-img"><img src="${item.image}" alt="${item.name}" onerror="this.src='https://placehold.co/200x200/f97316/white?text=🔸'"></div>
+            <div class="cosmetic-info">
+                <div class="cosmetic-name">${item.name}</div>
+                <div class="cosmetic-price"><span class="old-price">${oldPrice} تومان</span> ${priceFormatted} تومان</div>
+                <button class="buy-btn" onclick="addToCart({category_key:'${categoryKey}', name:'${item.name.replace(/'/g, "\\'")}', image:'${item.image}', price:${item.price}})">خرید</button>
+            </div>
+        </div>`;
+    }
+    container.innerHTML = html;
+}
+loadCosmetics();
+
+const faqDataShop = [
+    { q: "چگونه MarsClient را نصب کنم؟", a: "فایل نصاب را از دکمه دانلود دریافت کرده و اجرا کنید. مسیر نصب ماینکرفت را انتخاب کنید و پس از اتمام، لانچر را اجرا کنید." },
+    { q: "آیا با همه نسخه‌های ماینکرفت سازگار است؟", a: "بله! MarsClient از نسخه ۱.۷ تا آخرین نسخه ماینکرفت را پشتیبانی می‌کند." },
+    { q: "لانچر اختصاصی MarsClient چه قابلیت‌هایی دارد؟", a: "مدیریت مادها، دانلود خودکار نسخه‌ها، پشتیبانی از چند پروفایل، آپدیت خودکار و رابط کاربری زیبا." },
+    { q: "چگونه FPS را افزایش دهم؟", a: "در تنظیمات گرافیکی کلاینت، گزینه‌های Performance Mode و Smooth FPS را فعال کنید." },
+    { q: "آیا کلاینت رایگان است؟", a: "بله، کلاینت اصلی رایگان است. کازمتیک‌های فروشگاه دارای هزینه نمادین هستند." }
+];
+let currentTabShop = 'faq';
+let supportUserNameShop = '';
+let supportUserPhoneShop = '';
+let chatHistoryShop = [];
+
+function renderFaqContentShop() {
+    const container = document.getElementById('faqContent');
+    if (currentTabShop === 'faq') {
+        let html = '<ul class="faq-list">';
+        faqDataShop.forEach(item => { html += `<li onclick="showAnswerShop(this, '${item.a.replace(/'/g, "\\'")}')">${item.q}</li>`; });
+        html += '</ul><div id="faqAnswer" class="faq-answer"></div>';
+        container.innerHTML = html;
+    } else {
+        if (!supportUserNameShop || !supportUserPhoneShop) {
+            container.innerHTML = `<div class="support-init"><input type="text" id="supportName" placeholder="نام و نام خانوادگی"><input type="tel" id="supportPhone" placeholder="شماره تماس"><button onclick="startSupportChatShop()">شروع گفتگو</button></div>`;
+        } else {
+            renderChatShop();
+        }
+    }
+}
+
+function startSupportChatShop() {
+    const name = document.getElementById('supportName')?.value.trim();
+    const phone = document.getElementById('supportPhone')?.value.trim();
+    if (!name || !phone) { alert('لطفاً نام و شماره تماس را وارد کنید'); return; }
+    supportUserNameShop = name; supportUserPhoneShop = phone; chatHistoryShop = [];
+    setTimeout(() => { addBotMessageShop("سلام! به پشتیبانی MarsClient خوش آمدید. لطفاً مشکل خود را مطرح کنید."); renderChatShop(); }, 500);
+    renderFaqContentShop();
+}
+
+function renderChatShop() {
+    const container = document.getElementById('faqContent');
+    let messagesHtml = '<div class="chat-container"><div class="chat-messages" id="chatMessages">';
+    chatHistoryShop.forEach(msg => { const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); messagesHtml += `<div class="message ${msg.sender}"><div class="message-bubble">${msg.text}</div><div class="message-time">${time}</div></div>`; });
+    messagesHtml += `</div><div class="chat-input-area"><input type="text" id="chatInput" placeholder="پیام خود را بنویسید..."><button onclick="sendMessageShop()">ارسال</button></div></div>`;
+    container.innerHTML = messagesHtml;
+    const msgDiv = document.getElementById('chatMessages'); if (msgDiv) msgDiv.scrollTop = msgDiv.scrollHeight;
+    const input = document.getElementById('chatInput'); if (input) input.focus();
+}
+
+function addUserMessageShop(text) { chatHistoryShop.push({ sender: 'user', text: text, timestamp: Date.now() }); renderChatShop(); }
+function addBotMessageShop(text) { chatHistoryShop.push({ sender: 'bot', text: text, timestamp: Date.now() }); renderChatShop(); }
+
+function sendMessageShop() {
+    const input = document.getElementById('chatInput'); const message = input.value.trim();
+    if (!message) return;
+    addUserMessageShop(message); input.value = '';
+    const lowerMsg = message.toLowerCase();
+    let reply = "";
+    if (lowerMsg.includes('نصب') || lowerMsg.includes('install')) { reply = "برای نصب MarsClient، فایل نصاب را از دکمه دانلود دریافت کنید. پس از اجرا، مسیر ماینکرفت را انتخاب کنید."; }
+    else if (lowerMsg.includes('خرید') || lowerMsg.includes('price') || lowerMsg.includes('قیمت')) { reply = "برای خرید آیتم‌های فروشگاه، ابتدا وارد حساب شوید، سپس محصول را به سبد خرید اضافه کرده و پرداخت را انجام دهید."; }
+    else if (lowerMsg.includes('fps') || lowerMsg.includes('کاهش') || lowerMsg.includes('lag')) { reply = "برای افزایش FPS، در تنظیمات گرافیکی Performance Mode را فعال کنید."; }
+    else if (lowerMsg.includes('تشکر') || lowerMsg.includes('ممنون')) { reply = "خواهش می‌کنم! خوشحالیم که می‌توانیم کمک کنیم."; }
+    else { reply = "درخواست شما ثبت شد. همکاران ما به زودی پاسخ می‌دهند."; }
+    setTimeout(() => addBotMessageShop(reply), 800);
+}
+
+function showAnswerShop(el, answer) { const answerDiv = document.getElementById('faqAnswer'); if (!answerDiv) return; answerDiv.innerHTML = answer; answerDiv.classList.add('show'); }
+function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.classList.toggle('active'); if (panel.classList.contains('active')) { renderFaqContentShop(); const faqTabBtn = document.getElementById('faqTabBtn'); const supportTabBtn = document.getElementById('supportTabBtn'); faqTabBtn.onclick = () => { currentTabShop = 'faq'; renderFaqContentShop(); faqTabBtn.classList.add('active'); supportTabBtn.classList.remove('active'); }; supportTabBtn.onclick = () => { currentTabShop = 'support'; renderFaqContentShop(); supportTabBtn.classList.add('active'); faqTabBtn.classList.remove('active'); }; if (currentTabShop === 'support' && supportUserNameShop && supportUserPhoneShop) { renderChatShop(); } } }
+</script>
+</body>
+</html>"""
+
+# ===================== CART_TEMPLATE =====================
+CART_TEMPLATE = """<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>سبد خرید | MarsClient</title><style>{{ styles | safe }}</style></head>
+<body>
+<nav class="navbar"><a href="/" class="logo animate-float">MarsClient</a>
+<div class="nav-links" id="navLinks">
+<div class="online-badge"><span class="online-dot"></span> آنلاین: <span class="online-number" id="onlineCount">0</span> نفر</div>
+<a href="/">خانه</a>
+<a href="/shop">فروشگاه</a>
+<a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+<a href="/cart" class="cart-icon">🛒 <span id="cartCount">0</span></a>
+<div id="authSection" style="display: flex; gap: 12px;"></div>
+</div></nav>
+
+<section class="section" style="padding-top: 120px;">
+    <div style="text-align:center; margin-bottom:30px;"><h1 style="font-size:2.8rem; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:800;">سبد خرید</h1></div>
+    <div id="cartItemsContainer" style="max-width:800px; margin:0 auto;"></div>
+    <div id="cartTotal" style="text-align:center; margin-top:30px; font-size:1.3rem; font-weight:700;"></div>
+</section>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-stats">
+            <div class="footer-stat"><div class="footer-stat-value">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
+            <div class="footer-stat"><div class="footer-stat-value">۴۰+</div><div class="footer-stat-label">ماژول داخلی</div></div>
+        </div>
+        <div class="footer-copyright">© ۲۰۲۶ MarsClient — نسل بعدی موتور ماینکرفت</div>
+    </div>
+</footer>
+
+<script>
+let sessionId = localStorage.getItem('marsclient_session');
+if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
+function sendHeartbeat() { fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) }).then(r=>r.json()).then(data=>{ if(data.online_count!==undefined) document.getElementById('onlineCount').innerText=data.online_count; }).catch(e=>console.warn); }
+function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); }
+window.addEventListener('beforeunload', sendLeave);
+sendHeartbeat(); setInterval(sendHeartbeat, 20000);
+
+let cartData = { items: [], total: 0 };
+async function loadCart() { 
+    const res = await fetch('/api/cart'); 
+    if(res.status === 401) { window.location.href = '/login?next=/cart'; return; } 
+    const data = await res.json(); 
+    cartData = data; 
+    renderCart(); 
+    document.getElementById('cartCount').innerText = data.item_count || 0; 
+}
+function renderCart() { 
+    const container = document.getElementById('cartItemsContainer'); 
+    const totalDiv = document.getElementById('cartTotal'); 
+    if (!cartData.items.length) { 
+        container.innerHTML = '<div style="text-align:center; padding:40px;">سبد خرید شما خالی است. <a href="/shop" style="color:var(--orange-primary);">بازگشت به فروشگاه</a></div>'; 
+        totalDiv.innerHTML = ''; 
+        return; 
+    } 
+    let html = '<div style="display:flex; flex-direction:column; gap:20px;">'; 
+    for (let item of cartData.items) { 
+        html += `<div style="display:flex; align-items:center; gap:20px; background:var(--white-pure); padding:18px; border-radius:24px; border:1px solid var(--orange-light); box-shadow:var(--shadow-sm);">
+            <img src="${item.image}" style="width:70px; height:70px; object-fit:contain; border-radius:16px;">
+            <div style="flex:1;"><div><strong style="font-size:1.1rem;">${item.name}</strong></div><div style="color:var(--orange-primary); font-weight:700;">${item.price.toLocaleString()} تومان</div></div>
+            <div>
+                <button onclick="updateQuantity('${item.id}', ${item.quantity-1})" style="background:var(--orange-light); border:1px solid var(--orange-light); padding:6px 14px; border-radius:50px; cursor:pointer; font-weight:700;">-</button>
+                <span style="margin:0 12px; font-weight:700;">${item.quantity}</span>
+                <button onclick="updateQuantity('${item.id}', ${item.quantity+1})" style="background:var(--orange-light); border:1px solid var(--orange-light); padding:6px 14px; border-radius:50px; cursor:pointer; font-weight:700;">+</button>
+                <button onclick="removeItem('${item.id}')" style="background:var(--danger); border:none; padding:6px 14px; border-radius:50px; color:white; margin-left:12px; cursor:pointer;">حذف</button>
+            </div>
+        </div>`; 
+    } 
+    html += '</div>'; 
+    container.innerHTML = html; 
+    totalDiv.innerHTML = `مجموع سبد خرید: <span style="color:var(--orange-primary); font-size:1.8rem;">${cartData.total.toLocaleString()}</span> تومان`; 
+}
+async function updateQuantity(itemId, newQty) { 
+    if (newQty < 1) { await removeItem(itemId); return; } 
+    await fetch('/api/cart/update', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ item_id: itemId, quantity: newQty }) }); 
+    loadCart(); 
+}
+async function removeItem(itemId) { 
+    await fetch('/api/cart/remove', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ item_id: itemId }) }); 
+    loadCart(); 
+}
+async function refreshAuthUI() { 
+    const res = await fetch('/api/me'); const data = await res.json(); const authDiv = document.getElementById('authSection'); 
+    if(data.logged_in) { authDiv.innerHTML = `<span style="color:var(--orange-primary); font-weight:600;">${data.username}</span> <button id="logoutBtn" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; border:none; cursor:pointer; font-weight:600;">خروج</button>`; document.getElementById('logoutBtn')?.addEventListener('click', async () => { await fetch('/api/logout', {method:'POST'}); window.location.href = '/'; }); } 
+    else { authDiv.innerHTML = `<a href="/login" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; text-decoration:none; font-weight:600;">ورود</a>`; } 
+}
+refreshAuthUI(); 
+loadCart();
+</script>
+</body>
+</html>"""
+
+# Routes
 @app.route('/')
 def home():
     return render_template_string(HOME_TEMPLATE, styles=STYLES)
 
 @app.route('/shop')
 def shop():
-    return render_template_string(HOME_TEMPLATE, styles=STYLES)
+    return render_template_string(SHOP_TEMPLATE, styles=STYLES)
 
 @app.route('/cart')
 @login_required
 def cart():
-    return render_template_string(HOME_TEMPLATE, styles=STYLES)
+    return render_template_string(CART_TEMPLATE, styles=STYLES)
 
 @app.route('/api/download', methods=['POST'])
 def api_download():
