@@ -147,6 +147,7 @@ def init_db():
     cursor.execute('CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL, items TEXT NOT NULL, total_price INTEGER NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, minecraft_username TEXT UNIQUE NOT NULL, email TEXT NOT NULL, password_hash TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS coin_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, authority TEXT, status TEXT DEFAULT "pending", created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id))')
+    cursor.execute('CREATE TABLE IF NOT EXISTS support_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_name TEXT, question TEXT NOT NULL, answer TEXT, status TEXT DEFAULT "pending", created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     conn.commit()
     conn.close()
 
@@ -304,6 +305,23 @@ def get_team_members():
         else:
             member['avatar'] = f'https://ui-avatars.com/api/?name={member["name"]}&background=f97316&color=fff&size=120'
     return jsonify(members)
+
+# ========== API ثبت سوال پشتیبانی ==========
+@app.route('/api/support/question', methods=['POST'])
+def submit_support_question():
+    data = request.get_json()
+    question = data.get('question', '').strip()
+    user_name = data.get('user_name', 'کاربر مهمان').strip()
+    
+    if not question or len(question) < 5:
+        return jsonify({'success': False, 'message': 'سوال باید حداقل ۵ کاراکتر باشد'}), 400
+    
+    conn = sqlite3.connect(DB_FILE)
+    conn.execute('INSERT INTO support_questions (user_name, question) VALUES (?, ?)', (user_name, question))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': 'سوال شما ثبت شد. به زودی پاسخ داده می‌شود.'})
 
 # ========== پنل مدیریت آپلود عکس ==========
 @app.route('/admin/team', methods=['GET', 'POST'])
@@ -658,6 +676,358 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
 </html>'''
     files = os.listdir(TEAM_FOLDER) if os.path.exists(TEAM_FOLDER) else []
     return render_template_string(html, members=members, files=files)
+
+# ========== پنل مدیریت پشتیبانی ==========
+@app.route('/admin/support', methods=['GET', 'POST'])
+def admin_support():
+    # اگر رمز عبور ارسال شده، بررسی کن
+    if request.method == 'POST' and 'password' in request.form:
+        if request.form.get('password') == 'parsa1901':
+            session['support_admin'] = True
+            return redirect(url_for('admin_support'))
+        else:
+            return "رمز عبور اشتباه است", 403
+    
+    # اگر لاگین نکرده، فرم ورود نمایش بده
+    if not session.get('support_admin'):
+        return '''
+        <!DOCTYPE html>
+        <html dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>ورود به پنل پشتیبانی</title>
+            <style>
+                * { margin:0; padding:0; box-sizing:border-box; }
+                body { 
+                    font-family: 'Vazirmatn', system-ui, sans-serif;
+                    background: #0a0a0f;
+                    color: #fff;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                }
+                .login-box {
+                    background: #1a1a2e;
+                    padding: 40px;
+                    border-radius: 24px;
+                    border: 1px solid #2a2a3e;
+                    text-align: center;
+                    max-width: 400px;
+                    width: 90%;
+                }
+                .login-box h2 { color: #f97316; margin-bottom: 10px; font-size: 1.8rem; }
+                .login-box .sub { color: #8899aa; margin-bottom: 25px; font-size: 0.9rem; }
+                .login-box form { display: flex; flex-direction: column; gap: 15px; }
+                .login-box input {
+                    padding: 14px;
+                    border-radius: 12px;
+                    border: 1px solid #2a2a3e;
+                    background: #12121f;
+                    color: #fff;
+                    font-size: 1rem;
+                    transition: all 0.3s;
+                }
+                .login-box input:focus { outline: none; border-color: #f97316; }
+                .login-box button {
+                    background: linear-gradient(135deg, #f97316, #ea580c);
+                    color: white;
+                    border: none;
+                    padding: 14px;
+                    border-radius: 12px;
+                    font-weight: bold;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                }
+                .login-box button:hover { transform: scale(1.02); box-shadow: 0 8px 25px rgba(249, 115, 22, 0.3); }
+                .login-box .back-link {
+                    color: #8899aa;
+                    text-decoration: none;
+                    font-size: 0.85rem;
+                    margin-top: 15px;
+                    display: inline-block;
+                    transition: all 0.3s;
+                }
+                .login-box .back-link:hover { color: #f97316; }
+            </style>
+        </head>
+        <body>
+        <div class="login-box">
+            <h2>🔐 پنل پشتیبانی</h2>
+            <p class="sub">برای مدیریت سوالات کاربران، رمز عبور را وارد کنید</p>
+            <form method="post">
+                <input type="password" name="password" placeholder="رمز عبور را وارد کنید" required>
+                <button type="submit">ورود به پنل</button>
+            </form>
+            <a href="/" class="back-link">← بازگشت به صفحه اصلی</a>
+        </div>
+        </body>
+        </html>
+        '''
+    
+    # ===== نمایش لیست سوالات =====
+    conn = sqlite3.connect(DB_FILE)
+    questions = conn.execute('SELECT * FROM support_questions ORDER BY created_at DESC').fetchall()
+    conn.close()
+    
+    # ===== پردازش پاسخ یا حذف =====
+    if request.method == 'POST':
+        action = request.form.get('action')
+        q_id = request.form.get('q_id')
+        
+        if action == 'answer':
+            answer = request.form.get('answer', '').strip()
+            if answer and q_id:
+                conn = sqlite3.connect(DB_FILE)
+                conn.execute('UPDATE support_questions SET answer = ?, status = "answered" WHERE id = ?', (answer, q_id))
+                conn.commit()
+                conn.close()
+                return redirect(url_for('admin_support'))
+        
+        elif action == 'delete':
+            if q_id:
+                conn = sqlite3.connect(DB_FILE)
+                conn.execute('DELETE FROM support_questions WHERE id = ?', (q_id,))
+                conn.commit()
+                conn.close()
+                return redirect(url_for('admin_support'))
+    
+    # ===== صفحه مدیریت با استایل مشابه admin/team =====
+    html = '''<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت پشتیبانی</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { 
+            font-family: 'Vazirmatn', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            padding: 30px;
+            direction: rtl;
+            min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h2 { color: #f97316; margin-bottom: 10px; font-size: 2rem; }
+        .subtitle { color: #8899aa; margin-bottom: 30px; }
+        
+        .card {
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #2a2a3e;
+            transition: all 0.3s;
+        }
+        .card:hover { border-color: #f97316; }
+        
+        .question-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .question-item {
+            background: #12121f;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #2a2a3e;
+            transition: all 0.3s;
+        }
+        .question-item:hover { border-color: #f97316; }
+        
+        .q-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .q-user {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #f97316;
+        }
+        .q-date {
+            color: #8899aa;
+            font-size: 0.8rem;
+        }
+        .q-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .status-pending { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .status-answered { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        
+        .q-text {
+            background: #0a0a0f;
+            padding: 14px;
+            border-radius: 12px;
+            margin: 10px 0;
+            color: #ddd;
+            line-height: 1.7;
+        }
+        
+        .q-answer {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 14px;
+            border-radius: 12px;
+            margin: 10px 0;
+            color: #10b981;
+            line-height: 1.7;
+        }
+        .q-answer-label {
+            color: #8899aa;
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .answer-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .answer-form input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #2a2a3e;
+            background: #0a0a0f;
+            color: #fff;
+            font-size: 0.95rem;
+            min-width: 200px;
+            transition: all 0.3s;
+        }
+        .answer-form input[type="text"]:focus {
+            outline: none;
+            border-color: #f97316;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { transform: scale(1.02); }
+        .btn-answer { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+        .btn-delete { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .btn-delete:hover { background: rgba(239, 68, 68, 0.4); }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #8899aa;
+        }
+        .empty-state .icon { font-size: 4rem; margin-bottom: 15px; }
+        
+        .admin-links {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .admin-links a {
+            color: #f97316;
+            text-decoration: none;
+            transition: all 0.3s;
+            padding: 8px 16px;
+            background: rgba(249, 115, 22, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+        .admin-links a:hover { background: rgba(249, 115, 22, 0.2); }
+        
+        .back-link {
+            color: #f97316;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .back-link:hover { color: #ea580c; text-decoration: underline; }
+        
+        @media (max-width: 768px) {
+            .q-header { flex-direction: column; align-items: flex-start; }
+            .answer-form { flex-direction: column; }
+            .answer-form input[type="text"] { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>💬 مدیریت پشتیبانی</h2>
+    <p class="subtitle">سوالات کاربران را مشاهده و پاسخ دهید</p>
+    
+    <div class="admin-links">
+        <a href="/admin/team">📸 مدیریت تیم</a>
+        <a href="/admin/cosmetics">🎨 مدیریت کازمتیک</a>
+        <a href="/">🏠 صفحه اصلی</a>
+    </div>
+    
+    <div class="card">
+        <h3 style="margin-bottom:15px;">📋 لیست سوالات</h3>
+        
+        {% if questions %}
+        <div class="question-grid">
+            {% for q in questions %}
+            <div class="question-item">
+                <div class="q-header">
+                    <div>
+                        <span class="q-user">👤 {{ q[1] or 'کاربر مهمان' }}</span>
+                        <span class="q-date">📅 {{ q[5] }}</span>
+                    </div>
+                    <span class="q-status {% if q[4] == 'answered' %}status-answered{% else %}status-pending{% endif %}">
+                        {% if q[4] == 'answered' %}✅ پاسخ داده شده{% else %}⏳ در انتظار پاسخ{% endif %}
+                    </span>
+                </div>
+                
+                <div class="q-text">
+                    <strong>سوال:</strong> {{ q[2] }}
+                </div>
+                
+                {% if q[3] %}
+                <div class="q-answer">
+                    <span class="q-answer-label">💬 پاسخ:</span>
+                    {{ q[3] }}
+                </div>
+                {% endif %}
+                
+                <form method="post" class="answer-form">
+                    <input type="hidden" name="q_id" value="{{ q[0] }}">
+                    <input type="text" name="answer" placeholder="پاسخ خود را بنویسید..." {% if q[3] %}value="{{ q[3] }}"{% endif %}>
+                    <button type="submit" name="action" value="answer" class="btn btn-answer">📤 ارسال پاسخ</button>
+                    <button type="submit" name="action" value="delete" class="btn btn-delete" onclick="return confirm('آیا مطمئن هستید؟')">🗑️ حذف</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>هیچ سوالی ثبت نشده است</p>
+            <p style="font-size:0.85rem;margin-top:5px;">کاربران از طریق چت‌بات پشتیبانی سوال می‌پرسند</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <a href="/" class="back-link">← بازگشت به صفحه اصلی</a>
+</div>
+</body>
+</html>'''
+    
+    return render_template_string(html, questions=questions)
 
 @app.route('/login')
 def login_page():
