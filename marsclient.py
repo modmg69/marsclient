@@ -9,24 +9,26 @@ import requests
 import json
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from PIL import Image
+import io
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'marsclient_secret_key_v9')
 DB_FILE = 'marsclient_downloads.db'
 BASE_COSMETIC_FOLDER = 'static/cosmetics'
 TEAM_FOLDER = 'static/team'
-ALLOWED_EXTENSIONS = {'png', 'gif', 'jpg', 'jpeg', 'webp'}
+ALLOWED_EXTENSIONS = {'png', 'gif', 'jpg', 'jpeg', 'webp', 'bmp', 'tiff'}
 
 # ========== ایجاد فولدر تیم ==========
 def create_team_folder():
     os.makedirs(TEAM_FOLDER, exist_ok=True)
     team_members = [
-        {'name': 'پارسا', 'role': 'بنیان‌گذار و توسعه‌دهنده ارشد', 'username': '@modmg69', 'badge': 'بنیان‌گذار', 'icon': '🚀', 'file': 'پارسا_بنیان_گذار.png', 'status': 'online'},
-        {'name': 'حسین', 'role': 'مدیریت تیم', 'username': '@seet', 'badge': 'مدیر تیم', 'icon': '📊', 'file': 'حسین_مدیر_تیم.png', 'status': 'online'},
-        {'name': 'محمد رضا', 'role': 'پشتیبانی', 'username': '@MohammadReza23', 'badge': 'پشتیبانی', 'icon': '🛡️', 'file': 'محمد_رضا_پشتیبانی.png', 'status': 'online'},
-        {'name': 'محمد صادق', 'role': 'پشتیبانی', 'username': '@MohammadSadiq', 'badge': 'پشتیبانی', 'icon': '🎧', 'file': 'محمد_صادق_پشتیبانی.png', 'status': 'online'},
-        {'name': 'پارسا', 'role': 'طراح لانچر', 'username': '@Parsa__6780393', 'badge': 'طراح لانچر', 'icon': '🎨', 'file': 'پارسا_طراح_لانچر.png', 'status': 'online'},
-        {'name': 'سامان', 'role': 'دیزاین کلاینت', 'username': '@saman_design', 'badge': 'دیزاینر', 'icon': '✨', 'file': 'سامان_دیزاین_کلاینت.png', 'status': 'online'}
+        {'name': 'پارسا', 'role': 'بنیان‌گذار و توسعه‌دهنده ارشد', 'username': 'modmg69', 'badge': 'بنیان‌گذار', 'icon': '🚀', 'file': 'پارسا_بنیان_گذار.png', 'status': 'online'},
+        {'name': 'حسین', 'role': 'مدیریت تیم', 'username': 'seet', 'badge': 'مدیر تیم', 'icon': '📊', 'file': 'حسین_مدیر_تیم.png', 'status': 'online'},
+        {'name': 'محمد رضا', 'role': 'پشتیبانی', 'username': 'MohammadReza23', 'badge': 'پشتیبانی', 'icon': '🛡️', 'file': 'محمد_رضا_پشتیبانی.png', 'status': 'online'},
+        {'name': 'محمد صادق', 'role': 'پشتیبانی', 'username': 'MohammadSadiq', 'badge': 'پشتیبانی', 'icon': '🎧', 'file': 'محمد_صادق_پشتیبانی.png', 'status': 'online'},
+        {'name': 'پارسا', 'role': 'طراح لانچر', 'username': 'Parsa__6780393', 'badge': 'طراح لانچر', 'icon': '🎨', 'file': 'پارسا_طراح_لانچر.png', 'status': 'online'},
+        {'name': 'سامان', 'role': 'دیزاین کلاینت', 'username': 'saman_design', 'badge': 'دیزاینر', 'icon': '✨', 'file': 'سامان_دیزاین_کلاینت.png', 'status': 'online'}
     ]
     info_path = os.path.join(TEAM_FOLDER, 'team_info.json')
     if not os.path.exists(info_path):
@@ -303,6 +305,7 @@ def get_team_members():
             member['avatar'] = f'https://ui-avatars.com/api/?name={member["name"]}&background=f97316&color=fff&size=120'
     return jsonify(members)
 
+# ========== پنل مدیریت آپلود عکس ==========
 @app.route('/admin/team', methods=['GET', 'POST'])
 def admin_team():
     if request.method == 'POST':
@@ -310,89 +313,347 @@ def admin_team():
             return "رمز عبور اشتباه است", 403
         member_name = request.form.get('member_name')
         file = request.files.get('file')
+        
         if not member_name or not file or file.filename == '':
             return "لطفاً نام عضو و فایل را انتخاب کنید", 400
+        
+        ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'png'
+        if ext not in ALLOWED_EXTENSIONS:
+            return "فرمت فایل مجاز نیست. فقط PNG, JPG, GIF, WEBP, BMP, TIFF", 400
+        
         info_path = os.path.join(TEAM_FOLDER, 'team_info.json')
         with open(info_path, 'r', encoding='utf-8') as f:
             members = json.load(f)
+        
         target_member = None
         for m in members:
             if m['name'] == member_name:
                 target_member = m
                 break
+        
         if not target_member:
             return f"عضو با نام '{member_name}' یافت نشد", 400
-        ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'png'
-        if ext not in ALLOWED_EXTENSIONS:
-            return "فرمت فایل مجاز نیست. فقط PNG, JPG, GIF, WEBP", 400
-        filename = target_member['file']
-        file_path = os.path.join(TEAM_FOLDER, filename)
-        file.save(file_path)
-        return redirect(url_for('admin_team'))
+        
+        try:
+            img = Image.open(file.stream)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+            img_io = io.BytesIO()
+            img.save(img_io, format='PNG', optimize=True, quality=95)
+            img_io.seek(0)
+            
+            filename = target_member['file']
+            file_path = os.path.join(TEAM_FOLDER, filename)
+            with open(file_path, 'wb') as f:
+                f.write(img_io.getvalue())
+            
+            return redirect(url_for('admin_team'))
+            
+        except Exception as e:
+            return f"خطا در پردازش عکس: {str(e)}", 400
+    
     info_path = os.path.join(TEAM_FOLDER, 'team_info.json')
     with open(info_path, 'r', encoding='utf-8') as f:
         members = json.load(f)
+    
     html = '''<!DOCTYPE html>
 <html dir="rtl">
-<head><meta charset="UTF-8"><title>مدیریت عکس تیم</title>
-<style>
-body {font-family:Vazirmatn;background:#111;color:#fff;padding:30px;direction:rtl;}
-.container {max-width:800px;margin:0 auto;}
-h2 {color:#f97316;margin-bottom:20px;}
-.card {background:#1a1a2e;border-radius:16px;padding:20px;margin-bottom:20px;border:1px solid #333;}
-.member-item {display:flex;align-items:center;gap:20px;padding:10px;border-bottom:1px solid #333;}
-.member-item img {width:60px;height:60px;border-radius:50%;object-fit:cover;background:#f97316;}
-.member-info {flex:1;}
-.member-name {font-weight:bold;font-size:1.1rem;}
-.member-role {color:#8899aa;font-size:0.9rem;}
-.upload-form {display:flex;flex-direction:column;gap:15px;margin-top:20px;}
-.upload-form select,.upload-form input[type="file"] {padding:10px;border-radius:8px;border:1px solid #333;background:#222;color:#fff;}
-.upload-form button {background:#f97316;color:white;border:none;padding:12px;border-radius:8px;font-weight:bold;cursor:pointer;}
-.upload-form button:hover {background:#ea580c;}
-a {color:#f97316;text-decoration:none;}
-a:hover {text-decoration:underline;}
-</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت عکس تیم</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { 
+            font-family: 'Vazirmatn', system-ui, sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            padding: 30px;
+            direction: rtl;
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h2 { color: #f97316; margin-bottom: 20px; font-size: 2rem; }
+        .subtitle { color: #8899aa; margin-bottom: 30px; }
+        
+        .card {
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #2a2a3e;
+            transition: all 0.3s;
+        }
+        .card:hover { border-color: #f97316; }
+        
+        .member-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px;
+            background: #12121f;
+            border-radius: 16px;
+            border: 1px solid #2a2a3e;
+            transition: all 0.3s;
+        }
+        .member-item:hover { border-color: #f97316; }
+        
+        .member-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #f97316;
+            border: 3px solid #f97316;
+            transition: all 0.3s;
+        }
+        .member-avatar:hover { transform: scale(1.05); }
+        
+        .member-info { flex: 1; }
+        .member-name { font-weight: bold; font-size: 1.1rem; }
+        .member-role { color: #8899aa; font-size: 0.85rem; }
+        .member-file { font-size: 0.7rem; color: #556; margin-top: 4px; }
+        .member-status { 
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .status-exists { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .status-missing { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        
+        .upload-area {
+            border: 2px dashed #2a2a3e;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #f97316;
+            background: rgba(249, 115, 22, 0.05);
+        }
+        .upload-area .icon { font-size: 3rem; margin-bottom: 10px; }
+        .upload-area .text { color: #8899aa; }
+        .upload-area .highlight { color: #f97316; font-weight: bold; }
+        
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .upload-form select,
+        .upload-form input[type="password"] {
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #2a2a3e;
+            background: #12121f;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .upload-form select:focus,
+        .upload-form input:focus {
+            outline: none;
+            border-color: #f97316;
+        }
+        .upload-form select option { background: #1a1a2e; }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(249, 115, 22, 0.3);
+        }
+        
+        .preview-area {
+            display: none;
+            margin-top: 15px;
+            padding: 20px;
+            background: #12121f;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .preview-area img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 50%;
+            border: 3px solid #f97316;
+        }
+        .preview-area .file-name {
+            color: #8899aa;
+            margin-top: 10px;
+        }
+        
+        .back-link {
+            color: #f97316;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .back-link:hover { color: #ea580c; text-decoration: underline; }
+        
+        #previewImg {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        
+        @media (max-width: 768px) {
+            .member-grid { grid-template-columns: 1fr; }
+            .container { padding: 0 10px; }
+        }
+    </style>
 </head>
 <body>
 <div class="container">
     <h2>📸 مدیریت عکس تیم توسعه‌دهندگان</h2>
-    <p style="color:#8899aa;">برای هر عضو، عکس مورد نظر را آپلود کنید.</p>
+    <p class="subtitle">عکس‌ها با سایز اصلی خود ذخیره می‌شوند و کیفیت آن‌ها حفظ می‌گردد</p>
+    
     <div class="card">
-        <h3>👥 اعضای تیم</h3>
-        {% for member in members %}
-        <div class="member-item">
-            <img src="/static/team/{{ member.file }}?t={{ range(1, 100) | random }}" alt="{{ member.name }}" onerror="this.src='https://ui-avatars.com/api/?name={{ member.name }}&background=f97316&color=fff&size=120'">
-            <div class="member-info">
-                <div class="member-name">{{ member.name }}</div>
-                <div class="member-role">{{ member.role }} - {{ member.badge }}</div>
-                <div style="font-size:0.8rem;color:#666;">فایل: {{ member.file }}</div>
+        <h3 style="margin-bottom:15px;">👥 اعضای تیم</h3>
+        <div class="member-grid">
+            {% for member in members %}
+            <div class="member-item">
+                <img class="member-avatar" 
+                     src="/static/team/{{ member.file }}?t={{ range(1, 999) | random }}" 
+                     alt="{{ member.name }}"
+                     onerror="this.src='https://ui-avatars.com/api/?name={{ member.name }}&background=f97316&color=fff&size=120'">
+                <div class="member-info">
+                    <div class="member-name">{{ member.name }}</div>
+                    <div class="member-role">{{ member.role }}</div>
+                    <div class="member-file">📁 {{ member.file }}</div>
+                    <span class="member-status {% if member.file in files %}status-exists{% else %}status-missing{% endif %}">
+                        {% if member.file in files %}✅ عکس موجود{% else %}❌ بدون عکس{% endif %}
+                    </span>
+                </div>
             </div>
-            <div style="font-size:0.8rem;">
-                {% if member.file in files %}
-                ✅ عکس موجود
-                {% else %}
-                ❌ بدون عکس
-                {% endif %}
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
+    
     <div class="card">
-        <h3>📤 آپلود عکس جدید</h3>
-        <form method="post" enctype="multipart/form-data" class="upload-form">
+        <h3 style="margin-bottom:15px;">📤 آپلود عکس جدید</h3>
+        <form method="post" enctype="multipart/form-data" class="upload-form" id="uploadForm">
             <input type="password" name="password" placeholder="رمز عبور (admin123)" required>
-            <select name="member_name" required>
+            <select name="member_name" id="memberSelect" required>
                 <option value="">انتخاب عضو...</option>
                 {% for member in members %}
                 <option value="{{ member.name }}">{{ member.name }} - {{ member.role }}</option>
                 {% endfor %}
             </select>
-            <input type="file" name="file" accept="image/*" required>
-            <button type="submit">📤 آپلود عکس</button>
+            
+            <div class="upload-area" id="dropArea">
+                <div class="icon">🖼️</div>
+                <div class="text">
+                    <span class="highlight">فایل را اینجا بکشید و رها کنید</span><br>
+                    یا کلیک کنید تا انتخاب کنید<br>
+                    <span style="font-size:0.8rem;color:#556;">فرمت‌های مجاز: PNG, JPG, GIF, WEBP, BMP, TIFF</span>
+                </div>
+                <input type="file" name="file" id="fileInput" accept="image/*" style="display:none;" required>
+            </div>
+            
+            <div class="preview-area" id="previewArea">
+                <img id="previewImg" src="" alt="پیش‌نمایش">
+                <div class="file-name" id="fileName">فایل انتخاب شد</div>
+            </div>
+            
+            <button type="submit" class="upload-btn">📤 آپلود عکس</button>
         </form>
     </div>
-    <p><a href="/">← بازگشت به صفحه اصلی</a></p>
+    
+    <a href="/" class="back-link">← بازگشت به صفحه اصلی</a>
 </div>
+
+<script>
+const dropArea = document.getElementById('dropArea');
+const fileInput = document.getElementById('fileInput');
+const previewArea = document.getElementById('previewArea');
+const previewImg = document.getElementById('previewImg');
+const fileName = document.getElementById('fileName');
+
+dropArea.addEventListener('click', () => fileInput.click());
+
+dropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.classList.add('dragover');
+});
+dropArea.addEventListener('dragleave', () => {
+    dropArea.classList.remove('dragover');
+});
+dropArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFile(e.dataTransfer.files[0]);
+    }
+});
+
+fileInput.addEventListener('change', function() {
+    if (this.files.length) {
+        handleFile(this.files[0]);
+    }
+});
+
+function handleFile(file) {
+    const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(png|jpg|jpeg|gif|webp|bmp|tiff)$/i)) {
+        alert('فرمت فایل مجاز نیست. فقط PNG, JPG, GIF, WEBP, BMP, TIFF');
+        fileInput.value = '';
+        previewArea.style.display = 'none';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        previewImg.src = e.target.result;
+        previewArea.style.display = 'block';
+        fileName.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+    };
+    reader.readAsDataURL(file);
+}
+
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const password = document.querySelector('input[name="password"]').value;
+    const member = document.getElementById('memberSelect').value;
+    const file = fileInput.files[0];
+    
+    if (!password || password !== 'admin123') {
+        e.preventDefault();
+        alert('رمز عبور اشتباه است');
+        return;
+    }
+    if (!member) {
+        e.preventDefault();
+        alert('لطفاً یک عضو را انتخاب کنید');
+        return;
+    }
+    if (!file) {
+        e.preventDefault();
+        alert('لطفاً یک فایل انتخاب کنید');
+        return;
+    }
+});
+</script>
 </body>
 </html>'''
     files = os.listdir(TEAM_FOLDER) if os.path.exists(TEAM_FOLDER) else []
@@ -516,6 +777,7 @@ body {
     --success: #10b981;
     --danger: #ef4444;
     --online-green: #22c55e;
+    --offline-red: #ef4444;
 }
 
 @keyframes fadeInUp {
@@ -579,9 +841,37 @@ body {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
+@keyframes blinkRed {
+    0%, 100% { opacity: 1; border-color: var(--offline-red); color: var(--offline-red); }
+    50% { opacity: 0.3; border-color: #ff6b6b; color: #ff6b6b; }
+}
 @keyframes countUp {
     0% { opacity: 0; transform: scale(0.8); }
     100% { opacity: 1; transform: scale(1); }
+}
+@keyframes onlineFlash {
+    0% { background-color: var(--online-green); border-color: var(--online-green); }
+    30% { background-color: var(--offline-red); border-color: var(--offline-red); }
+    60% { background-color: var(--offline-red); border-color: var(--offline-red); }
+    100% { background-color: var(--online-green); border-color: var(--online-green); }
+}
+@keyframes offlinePulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+}
+@keyframes menuBounce {
+    0% { transform: scale(0.8) translateY(-10px); opacity: 0; }
+    50% { transform: scale(1.05) translateY(0); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .animate-fade-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards; }
@@ -598,7 +888,13 @@ body {
 .animate-pulse { animation: pulse 2s ease-in-out infinite; }
 .animate-wave { animation: wave 2s ease-in-out infinite; }
 .animate-blink { animation: blink 1.5s ease-in-out infinite; }
+.animate-blink-red { animation: blinkRed 1.2s ease-in-out infinite; }
 .animate-count { animation: countUp 0.3s ease forwards; }
+.animate-online-flash { animation: onlineFlash 1s ease forwards; }
+.animate-offline-pulse { animation: offlinePulse 1.5s ease-in-out infinite; }
+.animate-slide-down { animation: slideDown 0.3s ease forwards; }
+.animate-slide-up { animation: slideUp 0.3s ease forwards; }
+.animate-menu-bounce { animation: menuBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
 .scroll-animate {
     opacity: 0;
@@ -615,6 +911,132 @@ body {
 .delay-4 { animation-delay: 0.4s; }
 .delay-5 { animation-delay: 0.5s; }
 
+/* ===== نوار ناوبری ===== */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 5%;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--orange-light);
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* ===== منوی همبرگری ===== */
+.hamburger-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.hamburger span {
+    display: block;
+    width: 28px;
+    height: 3px;
+    background: var(--orange-primary);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.hamburger:hover span {
+    background: var(--orange-dark);
+}
+
+.hamburger.active span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 6px);
+}
+.hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+.hamburger.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -6px);
+}
+
+.mobile-menu {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: var(--white-pure);
+    border-radius: 20px;
+    padding: 15px 10px;
+    min-width: 200px;
+    border: 1px solid var(--orange-light);
+    box-shadow: var(--shadow-lg);
+    flex-direction: column;
+    gap: 8px;
+    z-index: 999;
+    animation: menuBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.mobile-menu.active {
+    display: flex;
+}
+
+.mobile-menu a {
+    text-decoration: none;
+    color: var(--text-dark);
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mobile-menu a:hover {
+    background: var(--orange-soft);
+    color: var(--orange-primary);
+}
+
+.mobile-menu a.support-link {
+    color: #ff4757;
+}
+.mobile-menu a.support-link:hover {
+    background: rgba(255, 71, 87, 0.1);
+}
+
+.logo {
+    font-size: 2rem;
+    font-weight: 800;
+    font-family: 'Poppins', 'Vazirmatn', sans-serif;
+    background: var(--gradient-glow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
 .online-badge {
     display: flex;
     align-items: center;
@@ -626,11 +1048,20 @@ body {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--online-green);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+.online-badge.offline-flash {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: var(--offline-red);
+    color: var(--offline-red);
+    animation: offlinePulse 0.6s ease-out;
 }
 .online-number {
     font-weight: 800;
     font-size: 1rem;
     margin: 0 2px;
+    transition: all 0.3s ease;
 }
 .online-dot {
     width: 8px;
@@ -639,87 +1070,12 @@ body {
     border-radius: 50%;
     animation: blink 1.5s ease-in-out infinite;
     box-shadow: 0 0 5px var(--online-green);
-}
-
-.logo {
-    font-size: 2rem;
-    font-weight: 800;
-    font-family: 'Poppins', 'Vazirmatn', sans-serif;
-    background: var(--gradient-glow);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -0.5px;
     transition: all 0.3s ease;
 }
-.hero h1, .section-title, .cosmetic-name, .developer-name {
-    font-family: 'Poppins', 'Vazirmatn', sans-serif;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-}
-.hero h1 {
-    font-size: 4.5rem;
-    background: var(--gradient-glow);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 1rem;
-    animation: fadeInUp 0.6s ease, glowPulse 3s infinite;
-}
-
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 5%;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(12px);
-    position: fixed;
-    width: 100%;
-    top: 0;
-    z-index: 1000;
-    border-bottom: 1px solid var(--orange-light);
-    flex-wrap: wrap;
-    animation: slideInRight 0.5s ease;
-}
-.nav-links {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-.nav-links a {
-    text-decoration: none;
-    color: var(--text-soft);
-    font-weight: 600;
-    transition: all 0.3s ease;
-    position: relative;
-    font-size: 0.95rem;
-}
-.nav-links a::before {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: var(--gradient);
-    transition: width 0.3s ease;
-}
-.nav-links a:hover::before,
-.nav-links a.active::before {
-    width: 100%;
-}
-.nav-links a:hover, .nav-links a.active {
-    color: var(--orange-primary);
-}
-.nav-links a.support-link {
-    color: #ff4757;
-    font-weight: 700;
-}
-.nav-links a.support-link:hover {
-    color: #ff6b81;
-}
-.nav-links a.support-link::before {
-    background: #ff4757;
+.online-dot.offline {
+    background-color: var(--offline-red);
+    animation: blinkRed 1.2s ease-in-out infinite;
+    box-shadow: 0 0 5px var(--offline-red);
 }
 
 .cart-icon {
@@ -741,6 +1097,20 @@ body {
     margin-right: 4px;
     color: white;
     font-weight: bold;
+}
+
+.hero h1, .section-title, .cosmetic-name, .developer-name {
+    font-family: 'Poppins', 'Vazirmatn', sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+.hero h1 {
+    font-size: 4.5rem;
+    background: var(--gradient-glow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+    animation: fadeInUp 0.6s ease, glowPulse 3s infinite;
 }
 
 .hero {
@@ -796,6 +1166,7 @@ body {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    text-decoration: none;
 }
 .btn::before {
     content: '';
@@ -1458,10 +1829,11 @@ footer {
     background: var(--gradient);
     border-radius: 10px;
 }
+
+/* ===== واکنش‌گرا ===== */
 @media (max-width: 768px) {
     .hero h1 { font-size: 2.8rem; }
-    .navbar { flex-direction: column; text-align: center; gap: 12px; }
-    .nav-links { justify-content: center; gap: 1rem; }
+    .navbar { flex-direction: row; text-align: center; gap: 10px; }
     .section { padding: 50px 20px; }
     .category-menu { gap: 8px; }
     .category-btn { padding: 8px 18px; font-size: 0.85rem; }
@@ -1473,19 +1845,33 @@ footer {
     .faq-panel { width: 300px; left: -10px; }
 }
 """
-
 # ===================== LOGIN_TEMPLATE =====================
 LOGIN_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ورود / ثبت نام | MarsClient</title><style>{{ styles | safe }}</style></head>
 <body>
-<nav class="navbar"><a href="/" class="logo animate-float">MarsClient</a>
-<div class="nav-links" id="navLinks">
-<div class="online-badge"><span class="online-dot"></span> آنلاین: <span class="online-number" id="onlineCount">0</span> نفر</div>
-<a href="/">خانه</a>
-<a href="/shop">فروشگاه</a>
-<a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
-</div></nav>
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/" class="logo animate-float">MarsClient</a>
+    </div>
+    <div class="nav-right">
+        <div class="online-badge" id="onlineBadge">
+            <span class="online-dot" id="onlineDot"></span>
+            آنلاین: <span class="online-number" id="onlineCount">0</span> نفر
+        </div>
+        <div class="hamburger-wrapper">
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="منو">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="/">🏠 خانه</a>
+                <a href="/shop">🛒 فروشگاه</a>
+                <a href="/login">🔑 ورود / ثبت‌نام</a>
+                <a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+            </div>
+        </div>
+    </div>
+</nav>
 
 <div id="downloadModal" class="modal"><div class="modal-content"><span class="close" onclick="closeDownloadModal()">&times;</span><div class="download-modal-icon">🔧</div><div class="download-modal-text">کلاینت در حال ساخت است</div><div class="download-modal-sub">به زودی منتشر می‌شود!</div></div></div>
 
@@ -1527,12 +1913,70 @@ LOGIN_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <script>
+// ===== منوی همبرگری =====
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    menu.classList.toggle('active');
+    btn.classList.toggle('active');
+}
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    if (!menu.contains(event.target) && !btn.contains(event.target)) {
+        menu.classList.remove('active');
+        btn.classList.remove('active');
+    }
+});
+
+// ===== آنلاین =====
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
-function sendHeartbeat() { fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) }).then(r=>r.json()).then(data=>{ if(data.online_count!==undefined) document.getElementById('onlineCount').innerText=data.online_count; }).catch(e=>console.warn); }
-function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); }
+let onlineCount = 0;
+
+function sendHeartbeat() { 
+    fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) })
+    .then(r=>r.json())
+    .then(data=>{ 
+        if(data.online_count !== undefined) {
+            const oldCount = onlineCount;
+            onlineCount = data.online_count;
+            document.getElementById('onlineCount').innerText = onlineCount;
+            if(onlineCount < oldCount || onlineCount === 0) {
+                flashOffline();
+            }
+        }
+    })
+    .catch(e=>console.warn); 
+}
+
+function flashOffline() {
+    const badge = document.getElementById('onlineBadge');
+    const dot = document.getElementById('onlineDot');
+    badge.classList.add('offline-flash');
+    dot.classList.add('offline');
+    setTimeout(() => {
+        badge.classList.remove('offline-flash');
+        dot.classList.remove('offline');
+    }, 1200);
+}
+
+function sendLeave() { 
+    navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId}));
+    flashOffline();
+}
+
 window.addEventListener('beforeunload', sendLeave);
-sendHeartbeat(); setInterval(sendHeartbeat, 20000);
+sendHeartbeat(); 
+setInterval(sendHeartbeat, 20000);
+
+window.addEventListener('load', function() {
+    const badge = document.getElementById('onlineBadge');
+    badge.style.animation = 'onlineFlash 0.8s ease';
+    setTimeout(() => {
+        badge.style.animation = '';
+    }, 1000);
+});
 
 function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
 function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
@@ -1692,15 +2136,30 @@ HOME_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MarsClient | صفحه اصلی</title><style>{{ styles | safe }}</style></head>
 <body>
-<nav class="navbar"><a href="/" class="logo animate-float">MarsClient</a>
-<div class="nav-links" id="navLinks">
-<div class="online-badge"><span class="online-dot"></span> آنلاین: <span class="online-number" id="onlineCount">0</span> نفر</div>
-<a href="/" class="active">خانه</a>
-<a href="/shop">فروشگاه</a>
-<a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
-<a href="/cart" class="cart-icon" id="cartLink" style="display: none;">🛒 <span id="cartCount">0</span></a>
-<div id="authSection" style="display: flex; gap: 12px;"></div>
-</div></nav>
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/" class="logo animate-float">MarsClient</a>
+    </div>
+    <div class="nav-right">
+        <div class="online-badge" id="onlineBadge">
+            <span class="online-dot" id="onlineDot"></span>
+            آنلاین: <span class="online-number" id="onlineCount">0</span> نفر
+        </div>
+        <div class="hamburger-wrapper">
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="منو">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="/">🏠 خانه</a>
+                <a href="/shop">🛒 فروشگاه</a>
+                <a href="/login">🔑 ورود / ثبت‌نام</a>
+                <a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+            </div>
+        </div>
+        <a href="/cart" class="cart-icon" id="cartLink" style="display: none;">🛒 <span id="cartCount">0</span></a>
+        <div id="authSection" style="display: flex; gap: 12px;"></div>
+    </div>
+</nav>
 
 <div id="downloadModal" class="modal"><div class="modal-content"><span class="close" onclick="closeDownloadModal()">&times;</span><div class="download-modal-icon">🔧</div><div class="download-modal-text">کلاینت در حال ساخت است</div><div class="download-modal-sub">به زودی منتشر می‌شود!</div></div></div>
 
@@ -1773,12 +2232,70 @@ HOME_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <script>
+// ===== منوی همبرگری =====
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    menu.classList.toggle('active');
+    btn.classList.toggle('active');
+}
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    if (!menu.contains(event.target) && !btn.contains(event.target)) {
+        menu.classList.remove('active');
+        btn.classList.remove('active');
+    }
+});
+
+// ===== آنلاین =====
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
-function sendHeartbeat() { fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) }).then(r=>r.json()).then(data=>{ if(data.online_count!==undefined) document.getElementById('onlineCount').innerText=data.online_count; }).catch(e=>console.warn); }
-function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); }
+let onlineCount = 0;
+
+function sendHeartbeat() { 
+    fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) })
+    .then(r=>r.json())
+    .then(data=>{ 
+        if(data.online_count !== undefined) {
+            const oldCount = onlineCount;
+            onlineCount = data.online_count;
+            document.getElementById('onlineCount').innerText = onlineCount;
+            if(onlineCount < oldCount || onlineCount === 0) {
+                flashOffline();
+            }
+        }
+    })
+    .catch(e=>console.warn); 
+}
+
+function flashOffline() {
+    const badge = document.getElementById('onlineBadge');
+    const dot = document.getElementById('onlineDot');
+    badge.classList.add('offline-flash');
+    dot.classList.add('offline');
+    setTimeout(() => {
+        badge.classList.remove('offline-flash');
+        dot.classList.remove('offline');
+    }, 1200);
+}
+
+function sendLeave() { 
+    navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId}));
+    flashOffline();
+}
+
 window.addEventListener('beforeunload', sendLeave);
-sendHeartbeat(); setInterval(sendHeartbeat, 20000);
+sendHeartbeat(); 
+setInterval(sendHeartbeat, 20000);
+
+window.addEventListener('load', function() {
+    const badge = document.getElementById('onlineBadge');
+    badge.style.animation = 'onlineFlash 0.8s ease';
+    setTimeout(() => {
+        badge.style.animation = '';
+    }, 1000);
+});
 
 function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
 function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
@@ -1799,7 +2316,6 @@ async function loadTeamMembers() {
         const container = document.getElementById('teamGrid');
         let html = '';
         members.forEach((member, index) => {
-            const isOnline = member.status === 'online';
             html += `
                 <div class="team-card scroll-animate" style="animation-delay: ${index * 0.1}s">
                     <div class="team-badge">${member.badge}</div>
@@ -1832,27 +2348,22 @@ async function loadTeamMembers() {
 }
 loadTeamMembers();
 
-// ===== انیمیشن شمارش ۳ عدد =====
 function animateCounter(elementId, target, suffix = '') {
     const counter = document.getElementById(elementId);
     if (!counter) return;
-    
     const duration = 2000;
     const startTime = performance.now();
     let current = 0;
-    
     function updateCounter(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 1.5);
         current = Math.floor(eased * target);
-        
         if (target === 4.9) {
             counter.textContent = (current / 10).toFixed(1);
         } else {
             counter.textContent = current.toLocaleString('en-US');
         }
-        
         if (progress < 1) {
             requestAnimationFrame(updateCounter);
         } else {
@@ -1863,7 +2374,6 @@ function animateCounter(elementId, target, suffix = '') {
             }
         }
     }
-    
     setTimeout(() => {
         requestAnimationFrame(updateCounter);
     }, 300);
@@ -1879,7 +2389,6 @@ const statsObserver = new IntersectionObserver((entries) => {
         }
     });
 }, { threshold: 0.3 });
-
 document.querySelectorAll('.stats-section').forEach(el => statsObserver.observe(el));
 
 const observerOptions = { threshold: 0.2, rootMargin: '0px 0px -50px 0px' };
@@ -1954,33 +2463,47 @@ function sendMessageHome() {
     let reply = "";
     if (lowerMsg.includes('نصب') || lowerMsg.includes('install')) { reply = "برای نصب MarsClient، فایل نصاب را از دکمه دانلود دریافت کنید. پس از اجرا، مسیر ماینکرفت را انتخاب کنید."; }
     else if (lowerMsg.includes('خرید') || lowerMsg.includes('price') || lowerMsg.includes('قیمت')) { reply = "برای خرید آیتم‌های فروشگاه، ابتدا وارد حساب شوید، سپس محصول را به سبد خرید اضافه کرده و پرداخت را انجام دهید."; }
-    else if (lowerMsg.includes('fps') || lowerMsg.includes('کاهش') || lowerMsg.includes('lag')) { reply = "برای افزایش FPS، در تنظیمات گرافیکی Performance Mode را فعال کنید و از مادهای اضافی کم استفاده کنید."; }
-    else if (lowerMsg.includes('مشکل') || lowerMsg.includes('error') || lowerMsg.includes('خطا')) { reply = "مشکل خود را دقیق‌تر توضیح دهید تا بتوانیم راهنمایی بهتری ارائه دهیم. در صورت نیاز، با شماره ۰۹۱۲۳۴۵۶۷۸۹ تماس بگیرید."; }
+    else if (lowerMsg.includes('fps') || lowerMsg.includes('کاهش') || lowerMsg.includes('lag')) { reply = "برای افزایش FPS، در تنظیمات گرافیکی Performance Mode را فعال کنید."; }
     else if (lowerMsg.includes('تشکر') || lowerMsg.includes('ممنون')) { reply = "خواهش می‌کنم! خوشحالیم که می‌توانیم کمک کنیم."; }
-    else { reply = "درخواست شما ثبت شد. همکاران ما به زودی پاسخ می‌دهند. (پاسخ خودکار: لطفاً موضوع را دقیق‌تر بگویید)"; }
+    else { reply = "درخواست شما ثبت شد. همکاران ما به زودی پاسخ می‌دهند."; }
     setTimeout(() => addBotMessageHome(reply), 800);
 }
 
-function showAnswerHome(el, answer) { const answerDiv = document.getElementById('faqAnswer'); if (!answerDiv) return; answerDiv.innerHTML = answer; answerDiv.classList.add('show'); answerDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+function showAnswerHome(el, answer) { const answerDiv = document.getElementById('faqAnswer'); if (!answerDiv) return; answerDiv.innerHTML = answer; answerDiv.classList.add('show'); }
 function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.classList.toggle('active'); if (panel.classList.contains('active')) { renderFaqContentHome(); const faqTabBtn = document.getElementById('faqTabBtn'); const supportTabBtn = document.getElementById('supportTabBtn'); faqTabBtn.onclick = () => { currentTabHome = 'faq'; renderFaqContentHome(); faqTabBtn.classList.add('active'); supportTabBtn.classList.remove('active'); }; supportTabBtn.onclick = () => { currentTabHome = 'support'; renderFaqContentHome(); supportTabBtn.classList.add('active'); faqTabBtn.classList.remove('active'); }; if (currentTabHome === 'support' && supportUserNameHome && supportUserPhoneHome) { renderChatHome(); } } }
 </script>
 </body>
 </html>"""
 
-# ===================== SHOP_TEMPLATE (فروشگاه کامل) =====================
+# ===================== SHOP_TEMPLATE =====================
 SHOP_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>فروشگاه | MarsClient</title><style>{{ styles | safe }}</style></head>
 <body>
-<nav class="navbar"><a href="/" class="logo animate-float">MarsClient</a>
-<div class="nav-links" id="navLinks">
-<div class="online-badge"><span class="online-dot"></span> آنلاین: <span class="online-number" id="onlineCount">0</span> نفر</div>
-<a href="/">خانه</a>
-<a href="/shop" class="active">فروشگاه</a>
-<a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
-<a href="/cart" class="cart-icon" id="cartLink" style="display: none;">🛒 <span id="cartCount">0</span></a>
-<div id="authSection" style="display: flex; gap: 12px;"></div>
-</div></nav>
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/" class="logo animate-float">MarsClient</a>
+    </div>
+    <div class="nav-right">
+        <div class="online-badge" id="onlineBadge">
+            <span class="online-dot" id="onlineDot"></span>
+            آنلاین: <span class="online-number" id="onlineCount">0</span> نفر
+        </div>
+        <div class="hamburger-wrapper">
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="منو">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="/">🏠 خانه</a>
+                <a href="/shop">🛒 فروشگاه</a>
+                <a href="/login">🔑 ورود / ثبت‌نام</a>
+                <a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+            </div>
+        </div>
+        <a href="/cart" class="cart-icon" id="cartLink" style="display: none;">🛒 <span id="cartCount">0</span></a>
+        <div id="authSection" style="display: flex; gap: 12px;"></div>
+    </div>
+</nav>
 
 <div id="downloadModal" class="modal"><div class="modal-content"><span class="close" onclick="closeDownloadModal()">&times;</span><div class="download-modal-icon">🔧</div><div class="download-modal-text">کلاینت در حال ساخت است</div><div class="download-modal-sub">به زودی منتشر می‌شود!</div></div></div>
 
@@ -2018,12 +2541,68 @@ SHOP_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <script>
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    menu.classList.toggle('active');
+    btn.classList.toggle('active');
+}
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    if (!menu.contains(event.target) && !btn.contains(event.target)) {
+        menu.classList.remove('active');
+        btn.classList.remove('active');
+    }
+});
+
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
-function sendHeartbeat() { fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) }).then(r=>r.json()).then(data=>{ if(data.online_count!==undefined) document.getElementById('onlineCount').innerText=data.online_count; }).catch(e=>console.warn); }
-function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); }
+let onlineCount = 0;
+
+function sendHeartbeat() { 
+    fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) })
+    .then(r=>r.json())
+    .then(data=>{ 
+        if(data.online_count !== undefined) {
+            const oldCount = onlineCount;
+            onlineCount = data.online_count;
+            document.getElementById('onlineCount').innerText = onlineCount;
+            if(onlineCount < oldCount || onlineCount === 0) {
+                flashOffline();
+            }
+        }
+    })
+    .catch(e=>console.warn); 
+}
+
+function flashOffline() {
+    const badge = document.getElementById('onlineBadge');
+    const dot = document.getElementById('onlineDot');
+    badge.classList.add('offline-flash');
+    dot.classList.add('offline');
+    setTimeout(() => {
+        badge.classList.remove('offline-flash');
+        dot.classList.remove('offline');
+    }, 1200);
+}
+
+function sendLeave() { 
+    navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId}));
+    flashOffline();
+}
+
 window.addEventListener('beforeunload', sendLeave);
-sendHeartbeat(); setInterval(sendHeartbeat, 20000);
+sendHeartbeat(); 
+setInterval(sendHeartbeat, 20000);
+
+window.addEventListener('load', function() {
+    const badge = document.getElementById('onlineBadge');
+    badge.style.animation = 'onlineFlash 0.8s ease';
+    setTimeout(() => {
+        badge.style.animation = '';
+    }, 1000);
+});
 
 function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
 function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
@@ -2172,15 +2751,30 @@ CART_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>سبد خرید | MarsClient</title><style>{{ styles | safe }}</style></head>
 <body>
-<nav class="navbar"><a href="/" class="logo animate-float">MarsClient</a>
-<div class="nav-links" id="navLinks">
-<div class="online-badge"><span class="online-dot"></span> آنلاین: <span class="online-number" id="onlineCount">0</span> نفر</div>
-<a href="/">خانه</a>
-<a href="/shop">فروشگاه</a>
-<a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
-<a href="/cart" class="cart-icon">🛒 <span id="cartCount">0</span></a>
-<div id="authSection" style="display: flex; gap: 12px;"></div>
-</div></nav>
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="/" class="logo animate-float">MarsClient</a>
+    </div>
+    <div class="nav-right">
+        <div class="online-badge" id="onlineBadge">
+            <span class="online-dot" id="onlineDot"></span>
+            آنلاین: <span class="online-number" id="onlineCount">0</span> نفر
+        </div>
+        <div class="hamburger-wrapper">
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="منو">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="/">🏠 خانه</a>
+                <a href="/shop">🛒 فروشگاه</a>
+                <a href="/login">🔑 ورود / ثبت‌نام</a>
+                <a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+            </div>
+        </div>
+        <a href="/cart" class="cart-icon">🛒 <span id="cartCount">0</span></a>
+        <div id="authSection" style="display: flex; gap: 12px;"></div>
+    </div>
+</nav>
 
 <section class="section" style="padding-top: 120px;">
     <div style="text-align:center; margin-bottom:30px;"><h1 style="font-size:2.8rem; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:800;">سبد خرید</h1></div>
@@ -2199,12 +2793,68 @@ CART_TEMPLATE = """<!DOCTYPE html>
 </footer>
 
 <script>
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    menu.classList.toggle('active');
+    btn.classList.toggle('active');
+}
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    if (!menu.contains(event.target) && !btn.contains(event.target)) {
+        menu.classList.remove('active');
+        btn.classList.remove('active');
+    }
+});
+
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
-function sendHeartbeat() { fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) }).then(r=>r.json()).then(data=>{ if(data.online_count!==undefined) document.getElementById('onlineCount').innerText=data.online_count; }).catch(e=>console.warn); }
-function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); }
+let onlineCount = 0;
+
+function sendHeartbeat() { 
+    fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) })
+    .then(r=>r.json())
+    .then(data=>{ 
+        if(data.online_count !== undefined) {
+            const oldCount = onlineCount;
+            onlineCount = data.online_count;
+            document.getElementById('onlineCount').innerText = onlineCount;
+            if(onlineCount < oldCount || onlineCount === 0) {
+                flashOffline();
+            }
+        }
+    })
+    .catch(e=>console.warn); 
+}
+
+function flashOffline() {
+    const badge = document.getElementById('onlineBadge');
+    const dot = document.getElementById('onlineDot');
+    badge.classList.add('offline-flash');
+    dot.classList.add('offline');
+    setTimeout(() => {
+        badge.classList.remove('offline-flash');
+        dot.classList.remove('offline');
+    }, 1200);
+}
+
+function sendLeave() { 
+    navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId}));
+    flashOffline();
+}
+
 window.addEventListener('beforeunload', sendLeave);
-sendHeartbeat(); setInterval(sendHeartbeat, 20000);
+sendHeartbeat(); 
+setInterval(sendHeartbeat, 20000);
+
+window.addEventListener('load', function() {
+    const badge = document.getElementById('onlineBadge');
+    badge.style.animation = 'onlineFlash 0.8s ease';
+    setTimeout(() => {
+        badge.style.animation = '';
+    }, 1000);
+});
 
 let cartData = { items: [], total: 0 };
 async function loadCart() { 
