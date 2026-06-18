@@ -768,12 +768,7 @@ def admin_support():
         </html>
         '''
     
-    # ===== نمایش لیست سوالات =====
-    conn = sqlite3.connect(DB_FILE)
-    questions = conn.execute('SELECT * FROM support_questions ORDER BY created_at DESC').fetchall()
-    conn.close()
-    
-    # ===== پردازش پاسخ یا حذف =====
+    # ===== پردازش پاسخ یا حذف (بعد از لاگین) =====
     if request.method == 'POST':
         action = request.form.get('action')
         q_id = request.form.get('q_id')
@@ -794,6 +789,11 @@ def admin_support():
                 conn.commit()
                 conn.close()
                 return redirect(url_for('admin_support'))
+    
+    # ===== نمایش لیست سوالات =====
+    conn = sqlite3.connect(DB_FILE)
+    questions = conn.execute('SELECT * FROM support_questions ORDER BY created_at DESC').fetchall()
+    conn.close()
     
     # ===== صفحه مدیریت با استایل مشابه admin/team =====
     html = '''<!DOCTYPE html>
