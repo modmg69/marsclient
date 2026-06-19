@@ -677,121 +677,136 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
     files = os.listdir(TEAM_FOLDER) if os.path.exists(TEAM_FOLDER) else []
     return render_template_string(html, members=members, files=files)
 
-# ========== پنل مدیریت پشتیبانی ==========
+# ========== پنل مدیریت پشتیبانی (بدون باگ) ==========
 @app.route('/admin/support', methods=['GET', 'POST'])
 def admin_support():
-    if request.method == 'POST' and 'password' in request.form:
-        if request.form.get('password') == 'parsa1901':
-            session['support_admin'] = True
-            return redirect(url_for('admin_support'))
-        else:
-            return "رمز عبور اشتباه است", 403
-    
-    if not session.get('support_admin'):
-        return '''
-        <!DOCTYPE html>
-        <html dir="rtl">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ورود به پنل پشتیبانی</title>
-            <style>
-                * { margin:0; padding:0; box-sizing:border-box; }
-                body { 
-                    font-family: 'Vazirmatn', system-ui, sans-serif;
-                    background: #0a0a0f;
-                    color: #fff;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    margin: 0;
-                }
-                .login-box {
-                    background: #1a1a2e;
-                    padding: 40px;
-                    border-radius: 24px;
-                    border: 1px solid #2a2a3e;
-                    text-align: center;
-                    max-width: 400px;
-                    width: 90%;
-                }
-                .login-box h2 { color: #f97316; margin-bottom: 10px; font-size: 1.8rem; }
-                .login-box .sub { color: #8899aa; margin-bottom: 25px; font-size: 0.9rem; }
-                .login-box form { display: flex; flex-direction: column; gap: 15px; }
-                .login-box input {
-                    padding: 14px;
-                    border-radius: 12px;
-                    border: 1px solid #2a2a3e;
-                    background: #12121f;
-                    color: #fff;
-                    font-size: 1rem;
-                    transition: all 0.3s;
-                }
-                .login-box input:focus { outline: none; border-color: #f97316; }
-                .login-box button {
-                    background: linear-gradient(135deg, #f97316, #ea580c);
-                    color: white;
-                    border: none;
-                    padding: 14px;
-                    border-radius: 12px;
-                    font-weight: bold;
-                    font-size: 1rem;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                }
-                .login-box button:hover { transform: scale(1.02); box-shadow: 0 8px 25px rgba(249, 115, 22, 0.3); }
-                .login-box .back-link {
-                    color: #8899aa;
-                    text-decoration: none;
-                    font-size: 0.85rem;
-                    margin-top: 15px;
-                    display: inline-block;
-                    transition: all 0.3s;
-                }
-                .login-box .back-link:hover { color: #f97316; }
-            </style>
-        </head>
-        <body>
-        <div class="login-box">
-            <h2>🔐 پنل پشتیبانی</h2>
-            <p class="sub">برای مدیریت سوالات کاربران، رمز عبور را وارد کنید</p>
-            <form method="post">
-                <input type="password" name="password" placeholder="رمز عبور را وارد کنید" required>
-                <button type="submit">ورود به پنل</button>
-            </form>
-            <a href="/" class="back-link">← بازگشت به صفحه اصلی</a>
-        </div>
-        </body>
-        </html>
-        '''
-    
-    if request.method == 'POST':
-        action = request.form.get('action')
-        q_id = request.form.get('q_id')
-        
-        if action == 'answer':
-            answer = request.form.get('answer', '').strip()
-            if answer and q_id:
-                conn = sqlite3.connect(DB_FILE)
-                conn.execute('UPDATE support_questions SET answer = ?, status = "answered" WHERE id = ?', (answer, q_id))
-                conn.commit()
-                conn.close()
+    try:
+        # بررسی لاگین
+        if request.method == 'POST' and 'password' in request.form:
+            if request.form.get('password') == 'parsa1901':
+                session['support_admin'] = True
                 return redirect(url_for('admin_support'))
+            else:
+                return "رمز عبور اشتباه است", 403
         
-        elif action == 'delete':
-            if q_id:
-                conn = sqlite3.connect(DB_FILE)
-                conn.execute('DELETE FROM support_questions WHERE id = ?', (q_id,))
-                conn.commit()
-                conn.close()
-                return redirect(url_for('admin_support'))
-    
-    conn = sqlite3.connect(DB_FILE)
-    questions = conn.execute('SELECT * FROM support_questions ORDER BY created_at DESC').fetchall()
-    conn.close()
-    
-    html = '''<!DOCTYPE html>
+        # اگر لاگین نکرده، فرم ورود نمایش بده
+        if not session.get('support_admin'):
+            return '''
+            <!DOCTYPE html>
+            <html dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>ورود به پنل پشتیبانی</title>
+                <style>
+                    * { margin:0; padding:0; box-sizing:border-box; }
+                    body { 
+                        font-family: 'Vazirmatn', system-ui, sans-serif;
+                        background: #0a0a0f;
+                        color: #fff;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        margin: 0;
+                    }
+                    .login-box {
+                        background: #1a1a2e;
+                        padding: 40px;
+                        border-radius: 24px;
+                        border: 1px solid #2a2a3e;
+                        text-align: center;
+                        max-width: 400px;
+                        width: 90%;
+                    }
+                    .login-box h2 { color: #f97316; margin-bottom: 10px; font-size: 1.8rem; }
+                    .login-box .sub { color: #8899aa; margin-bottom: 25px; font-size: 0.9rem; }
+                    .login-box form { display: flex; flex-direction: column; gap: 15px; }
+                    .login-box input {
+                        padding: 14px;
+                        border-radius: 12px;
+                        border: 1px solid #2a2a3e;
+                        background: #12121f;
+                        color: #fff;
+                        font-size: 1rem;
+                        transition: all 0.3s;
+                    }
+                    .login-box input:focus { outline: none; border-color: #f97316; }
+                    .login-box button {
+                        background: linear-gradient(135deg, #f97316, #ea580c);
+                        color: white;
+                        border: none;
+                        padding: 14px;
+                        border-radius: 12px;
+                        font-weight: bold;
+                        font-size: 1rem;
+                        cursor: pointer;
+                        transition: all 0.3s;
+                    }
+                    .login-box button:hover { transform: scale(1.02); box-shadow: 0 8px 25px rgba(249, 115, 22, 0.3); }
+                    .login-box .back-link {
+                        color: #8899aa;
+                        text-decoration: none;
+                        font-size: 0.85rem;
+                        margin-top: 15px;
+                        display: inline-block;
+                        transition: all 0.3s;
+                    }
+                    .login-box .back-link:hover { color: #f97316; }
+                </style>
+            </head>
+            <body>
+            <div class="login-box">
+                <h2>🔐 پنل پشتیبانی</h2>
+                <p class="sub">برای مدیریت سوالات کاربران، رمز عبور را وارد کنید</p>
+                <form method="post">
+                    <input type="password" name="password" placeholder="رمز عبور را وارد کنید" required>
+                    <button type="submit">ورود به پنل</button>
+                </form>
+                <a href="/" class="back-link">← بازگشت به صفحه اصلی</a>
+            </div>
+            </body>
+            </html>
+            '''
+        
+        # ===== پردازش پاسخ یا حذف (بعد از لاگین) =====
+        if request.method == 'POST':
+            action = request.form.get('action')
+            q_id = request.form.get('q_id')
+            
+            if action == 'answer':
+                answer = request.form.get('answer', '').strip()
+                if answer and q_id:
+                    try:
+                        conn = sqlite3.connect(DB_FILE)
+                        conn.execute('UPDATE support_questions SET answer = ?, status = "answered" WHERE id = ?', (answer, q_id))
+                        conn.commit()
+                        conn.close()
+                    except Exception as e:
+                        return f"خطا در ذخیره پاسخ: {str(e)}", 500
+                    return redirect(url_for('admin_support'))
+            
+            elif action == 'delete':
+                if q_id:
+                    try:
+                        conn = sqlite3.connect(DB_FILE)
+                        conn.execute('DELETE FROM support_questions WHERE id = ?', (q_id,))
+                        conn.commit()
+                        conn.close()
+                    except Exception as e:
+                        return f"خطا در حذف: {str(e)}", 500
+                    return redirect(url_for('admin_support'))
+        
+        # ===== نمایش لیست سوالات =====
+        try:
+            conn = sqlite3.connect(DB_FILE)
+            questions = conn.execute('SELECT * FROM support_questions ORDER BY created_at DESC').fetchall()
+            conn.close()
+        except Exception as e:
+            return f"خطا در اتصال به دیتابیس: {str(e)}", 500
+        
+        # ===== صفحه مدیریت =====
+        html = '''<!DOCTYPE html>
 <html dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -1021,8 +1036,11 @@ def admin_support():
 </div>
 </body>
 </html>'''
+        
+        return render_template_string(html, questions=questions)
     
-    return render_template_string(html, questions=questions)
+    except Exception as e:
+        return f"خطای کلی در پنل پشتیبانی: {str(e)}", 500
 
 @app.route('/login')
 def login_page():
