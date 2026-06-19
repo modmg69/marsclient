@@ -680,7 +680,6 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
 # ========== پنل مدیریت پشتیبانی ==========
 @app.route('/admin/support', methods=['GET', 'POST'])
 def admin_support():
-    # اگر رمز عبور ارسال شده، بررسی کن
     if request.method == 'POST' and 'password' in request.form:
         if request.form.get('password') == 'parsa1901':
             session['support_admin'] = True
@@ -688,7 +687,6 @@ def admin_support():
         else:
             return "رمز عبور اشتباه است", 403
     
-    # اگر لاگین نکرده، فرم ورود نمایش بده
     if not session.get('support_admin'):
         return '''
         <!DOCTYPE html>
@@ -768,7 +766,6 @@ def admin_support():
         </html>
         '''
     
-    # ===== پردازش پاسخ یا حذف (بعد از لاگین) =====
     if request.method == 'POST':
         action = request.form.get('action')
         q_id = request.form.get('q_id')
@@ -790,12 +787,10 @@ def admin_support():
                 conn.close()
                 return redirect(url_for('admin_support'))
     
-    # ===== نمایش لیست سوالات =====
     conn = sqlite3.connect(DB_FILE)
     questions = conn.execute('SELECT * FROM support_questions ORDER BY created_at DESC').fetchall()
     conn.close()
     
-    # ===== صفحه مدیریت با استایل مشابه admin/team =====
     html = '''<!DOCTYPE html>
 <html dir="rtl">
 <head>
@@ -1892,6 +1887,83 @@ body {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
 }
+/* ===== مودال دانلود ===== */
+.download-modal {
+    max-width: 500px !important;
+    padding: 30px !important;
+}
+
+.download-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.download-option {
+    background: var(--orange-soft);
+    border-radius: 20px;
+    padding: 20px 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.download-option:hover {
+    transform: translateY(-5px);
+    border-color: var(--orange-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.download-icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+}
+
+.download-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-dark);
+}
+
+.download-version {
+    font-size: 0.75rem;
+    color: var(--text-soft);
+    margin: 4px 0 12px 0;
+}
+
+.download-btn {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.download-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4);
+}
+
+.download-btn:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 480px) {
+    .download-options {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .download-option {
+        padding: 15px;
+    }
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -1906,7 +1978,7 @@ body {
 }
 .modal-content {
     background: var(--white-pure);
-    margin: 20% auto;
+    margin: 10% auto;
     padding: 30px;
     width: 90%;
     max-width: 400px;
@@ -2203,7 +2275,12 @@ footer {
 /* ===== واکنش‌گرا ===== */
 @media (max-width: 768px) {
     .hero h1 { font-size: 2.8rem; }
-    .navbar { flex-direction: row; text-align: center; gap: 10px; }
+    .navbar { padding: 0.5rem 4%; gap: 8px; }
+    .logo { font-size: 1.5rem; }
+    .online-badge { font-size: 0.7rem; padding: 3px 8px; }
+    .online-number { font-size: 0.8rem; }
+    .hamburger span { width: 24px; height: 2.5px; }
+    .mobile-menu { min-width: 160px; right: -10px; top: 45px; }
     .section { padding: 50px 20px; }
     .category-menu { gap: 8px; }
     .category-btn { padding: 8px 18px; font-size: 0.85rem; }
@@ -2243,7 +2320,51 @@ LOGIN_TEMPLATE = """<!DOCTYPE html>
     </div>
 </nav>
 
-<div id="downloadModal" class="modal"><div class="modal-content"><span class="close" onclick="closeDownloadModal()">&times;</span><div class="download-modal-icon">🔧</div><div class="download-modal-text">کلاینت در حال ساخت است</div><div class="download-modal-sub">به زودی منتشر می‌شود!</div></div></div>
+<div id="downloadModal" class="modal">
+    <div class="modal-content download-modal">
+        <span class="close" onclick="closeDownloadModal()">&times;</span>
+        <div class="download-modal-icon">🚀</div>
+        <h2 style="color:var(--orange-primary); margin-bottom:5px;">MarsClient Download</h2>
+        <p style="color:var(--text-soft); margin-bottom:20px;">کلاینت ماینکرفت نسل بعدی</p>
+        
+        <div class="download-options">
+            <div class="download-option">
+                <div class="download-icon">🪟</div>
+                <div class="download-name">ویندوز</div>
+                <div class="download-version">Windows 10/11</div>
+                <button class="download-btn" onclick="showComingSoon('ویندوز')">به زودی ⏳</button>
+            </div>
+            
+            <div class="download-option">
+                <div class="download-icon">🐧</div>
+                <div class="download-name">لینوکس</div>
+                <div class="download-version">Ubuntu / Debian</div>
+                <button class="download-btn" onclick="showComingSoon('لینوکس')">به زودی ⏳</button>
+            </div>
+            
+            <div class="download-option">
+                <div class="download-icon">🍎</div>
+                <div class="download-name">مک</div>
+                <div class="download-version">macOS</div>
+                <button class="download-btn" onclick="showComingSoon('مک')">به زودی ⏳</button>
+            </div>
+        </div>
+        
+        <p style="color:#8899aa; font-size:0.8rem; margin-top:15px;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
+    </div>
+</div>
+
+<div id="comingSoonModal" class="modal">
+    <div class="modal-content" style="max-width:350px;">
+        <span class="close" onclick="closeComingSoon()">&times;</span>
+        <div style="text-align:center; padding:10px;">
+            <div style="font-size:4rem; margin-bottom:10px;">🔧</div>
+            <h3 style="color:var(--orange-primary);">در حال ساخت!</h3>
+            <p id="comingSoonText" style="color:var(--text-soft); margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
+            <button onclick="closeComingSoon()" class="btn" style="padding:10px 30px;">متوجه شدم</button>
+        </div>
+    </div>
+</div>
 
 <section class="section" style="min-height:80vh; padding-top:120px;">
 <div style="max-width:500px; margin:0 auto; background:var(--white-pure); border-radius:32px; padding:35px; border:1px solid var(--orange-light); box-shadow:var(--shadow-md);">
@@ -2299,6 +2420,40 @@ document.addEventListener('click', function(event) {
     }
 });
 
+// ===== مودال دانلود =====
+function showDownloadModal() { 
+    document.getElementById('downloadModal').style.display='block'; 
+}
+
+function closeDownloadModal() { 
+    document.getElementById('downloadModal').style.display='none'; 
+}
+
+// ===== مودال "به زودی" =====
+function showComingSoon(os) {
+    const modal = document.getElementById('comingSoonModal');
+    const text = document.getElementById('comingSoonText');
+    const osNames = {
+        'ویندوز': 'ویندوز (Windows 10/11)',
+        'لینوکس': 'لینوکس (Ubuntu / Debian)',
+        'مک': 'مک (macOS)'
+    };
+    text.textContent = `نسخه ${osNames[os] || os} به زودی منتشر می‌شود`;
+    modal.style.display = 'block';
+}
+
+function closeComingSoon() {
+    document.getElementById('comingSoonModal').style.display='none';
+}
+
+// بستن مودال با کلیک خارج از آن
+window.onclick = function(event) {
+    const modal1 = document.getElementById('downloadModal');
+    const modal2 = document.getElementById('comingSoonModal');
+    if (event.target == modal1) modal1.style.display = 'none';
+    if (event.target == modal2) modal2.style.display = 'none';
+}
+
 // ===== آنلاین =====
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
@@ -2347,10 +2502,6 @@ window.addEventListener('load', function() {
         badge.style.animation = '';
     }, 1000);
 });
-
-function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
-function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
-window.onclick = function(event) { const modal = document.getElementById('downloadModal'); if (event.target == modal) modal.style.display='none'; }
 
 function togglePassword(id) { const input = document.getElementById(id); input.type = input.type === 'password' ? 'text' : 'password'; }
 function validateEmail(email) { return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email); }
@@ -2531,7 +2682,51 @@ HOME_TEMPLATE = """<!DOCTYPE html>
     </div>
 </nav>
 
-<div id="downloadModal" class="modal"><div class="modal-content"><span class="close" onclick="closeDownloadModal()">&times;</span><div class="download-modal-icon">🔧</div><div class="download-modal-text">کلاینت در حال ساخت است</div><div class="download-modal-sub">به زودی منتشر می‌شود!</div></div></div>
+<div id="downloadModal" class="modal">
+    <div class="modal-content download-modal">
+        <span class="close" onclick="closeDownloadModal()">&times;</span>
+        <div class="download-modal-icon">🚀</div>
+        <h2 style="color:var(--orange-primary); margin-bottom:5px;">MarsClient Download</h2>
+        <p style="color:var(--text-soft); margin-bottom:20px;">کلاینت ماینکرفت نسل بعدی</p>
+        
+        <div class="download-options">
+            <div class="download-option">
+                <div class="download-icon">🪟</div>
+                <div class="download-name">ویندوز</div>
+                <div class="download-version">Windows 10/11</div>
+                <button class="download-btn" onclick="showComingSoon('ویندوز')">به زودی ⏳</button>
+            </div>
+            
+            <div class="download-option">
+                <div class="download-icon">🐧</div>
+                <div class="download-name">لینوکس</div>
+                <div class="download-version">Ubuntu / Debian</div>
+                <button class="download-btn" onclick="showComingSoon('لینوکس')">به زودی ⏳</button>
+            </div>
+            
+            <div class="download-option">
+                <div class="download-icon">🍎</div>
+                <div class="download-name">مک</div>
+                <div class="download-version">macOS</div>
+                <button class="download-btn" onclick="showComingSoon('مک')">به زودی ⏳</button>
+            </div>
+        </div>
+        
+        <p style="color:#8899aa; font-size:0.8rem; margin-top:15px;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
+    </div>
+</div>
+
+<div id="comingSoonModal" class="modal">
+    <div class="modal-content" style="max-width:350px;">
+        <span class="close" onclick="closeComingSoon()">&times;</span>
+        <div style="text-align:center; padding:10px;">
+            <div style="font-size:4rem; margin-bottom:10px;">🔧</div>
+            <h3 style="color:var(--orange-primary);">در حال ساخت!</h3>
+            <p id="comingSoonText" style="color:var(--text-soft); margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
+            <button onclick="closeComingSoon()" class="btn" style="padding:10px 30px;">متوجه شدم</button>
+        </div>
+    </div>
+</div>
 
 <section class="hero">
     <div class="beta-tag animate-fade-up">🔸 نسخه بتا v1.0 منتشر شد 🔸</div>
@@ -2618,6 +2813,40 @@ document.addEventListener('click', function(event) {
     }
 });
 
+// ===== مودال دانلود =====
+function showDownloadModal() { 
+    document.getElementById('downloadModal').style.display='block'; 
+}
+
+function closeDownloadModal() { 
+    document.getElementById('downloadModal').style.display='none'; 
+}
+
+// ===== مودال "به زودی" =====
+function showComingSoon(os) {
+    const modal = document.getElementById('comingSoonModal');
+    const text = document.getElementById('comingSoonText');
+    const osNames = {
+        'ویندوز': 'ویندوز (Windows 10/11)',
+        'لینوکس': 'لینوکس (Ubuntu / Debian)',
+        'مک': 'مک (macOS)'
+    };
+    text.textContent = `نسخه ${osNames[os] || os} به زودی منتشر می‌شود`;
+    modal.style.display = 'block';
+}
+
+function closeComingSoon() {
+    document.getElementById('comingSoonModal').style.display='none';
+}
+
+// بستن مودال با کلیک خارج از آن
+window.onclick = function(event) {
+    const modal1 = document.getElementById('downloadModal');
+    const modal2 = document.getElementById('comingSoonModal');
+    if (event.target == modal1) modal1.style.display = 'none';
+    if (event.target == modal2) modal2.style.display = 'none';
+}
+
 // ===== آنلاین =====
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
@@ -2666,10 +2895,6 @@ window.addEventListener('load', function() {
         badge.style.animation = '';
     }, 1000);
 });
-
-function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
-function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
-window.onclick = function(event) { const modal = document.getElementById('downloadModal'); if (event.target == modal) modal.style.display='none'; }
 
 async function refreshAuthUI() {
     const res = await fetch('/api/me'); const data = await res.json(); const authDiv = document.getElementById('authSection'); const cartLink = document.getElementById('cartLink');
@@ -2875,7 +3100,51 @@ SHOP_TEMPLATE = """<!DOCTYPE html>
     </div>
 </nav>
 
-<div id="downloadModal" class="modal"><div class="modal-content"><span class="close" onclick="closeDownloadModal()">&times;</span><div class="download-modal-icon">🔧</div><div class="download-modal-text">کلاینت در حال ساخت است</div><div class="download-modal-sub">به زودی منتشر می‌شود!</div></div></div>
+<div id="downloadModal" class="modal">
+    <div class="modal-content download-modal">
+        <span class="close" onclick="closeDownloadModal()">&times;</span>
+        <div class="download-modal-icon">🚀</div>
+        <h2 style="color:var(--orange-primary); margin-bottom:5px;">MarsClient Download</h2>
+        <p style="color:var(--text-soft); margin-bottom:20px;">کلاینت ماینکرفت نسل بعدی</p>
+        
+        <div class="download-options">
+            <div class="download-option">
+                <div class="download-icon">🪟</div>
+                <div class="download-name">ویندوز</div>
+                <div class="download-version">Windows 10/11</div>
+                <button class="download-btn" onclick="showComingSoon('ویندوز')">به زودی ⏳</button>
+            </div>
+            
+            <div class="download-option">
+                <div class="download-icon">🐧</div>
+                <div class="download-name">لینوکس</div>
+                <div class="download-version">Ubuntu / Debian</div>
+                <button class="download-btn" onclick="showComingSoon('لینوکس')">به زودی ⏳</button>
+            </div>
+            
+            <div class="download-option">
+                <div class="download-icon">🍎</div>
+                <div class="download-name">مک</div>
+                <div class="download-version">macOS</div>
+                <button class="download-btn" onclick="showComingSoon('مک')">به زودی ⏳</button>
+            </div>
+        </div>
+        
+        <p style="color:#8899aa; font-size:0.8rem; margin-top:15px;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
+    </div>
+</div>
+
+<div id="comingSoonModal" class="modal">
+    <div class="modal-content" style="max-width:350px;">
+        <span class="close" onclick="closeComingSoon()">&times;</span>
+        <div style="text-align:center; padding:10px;">
+            <div style="font-size:4rem; margin-bottom:10px;">🔧</div>
+            <h3 style="color:var(--orange-primary);">در حال ساخت!</h3>
+            <p id="comingSoonText" style="color:var(--text-soft); margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
+            <button onclick="closeComingSoon()" class="btn" style="padding:10px 30px;">متوجه شدم</button>
+        </div>
+    </div>
+</div>
 
 <section class="section" style="padding-top: 120px;">
     <div style="text-align:center; margin-bottom:30px;">
@@ -2926,6 +3195,40 @@ document.addEventListener('click', function(event) {
     }
 });
 
+// ===== مودال دانلود =====
+function showDownloadModal() { 
+    document.getElementById('downloadModal').style.display='block'; 
+}
+
+function closeDownloadModal() { 
+    document.getElementById('downloadModal').style.display='none'; 
+}
+
+// ===== مودال "به زودی" =====
+function showComingSoon(os) {
+    const modal = document.getElementById('comingSoonModal');
+    const text = document.getElementById('comingSoonText');
+    const osNames = {
+        'ویندوز': 'ویندوز (Windows 10/11)',
+        'لینوکس': 'لینوکس (Ubuntu / Debian)',
+        'مک': 'مک (macOS)'
+    };
+    text.textContent = `نسخه ${osNames[os] || os} به زودی منتشر می‌شود`;
+    modal.style.display = 'block';
+}
+
+function closeComingSoon() {
+    document.getElementById('comingSoonModal').style.display='none';
+}
+
+// بستن مودال با کلیک خارج از آن
+window.onclick = function(event) {
+    const modal1 = document.getElementById('downloadModal');
+    const modal2 = document.getElementById('comingSoonModal');
+    if (event.target == modal1) modal1.style.display = 'none';
+    if (event.target == modal2) modal2.style.display = 'none';
+}
+
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
 let onlineCount = 0;
@@ -2973,10 +3276,6 @@ window.addEventListener('load', function() {
         badge.style.animation = '';
     }, 1000);
 });
-
-function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
-function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
-window.onclick = function(event) { const modal = document.getElementById('downloadModal'); if (event.target == modal) modal.style.display='none'; }
 
 async function refreshAuthUI() {
     const res = await fetch('/api/me'); const data = await res.json(); const authDiv = document.getElementById('authSection'); const cartLink = document.getElementById('cartLink');
@@ -3146,6 +3445,52 @@ CART_TEMPLATE = """<!DOCTYPE html>
     </div>
 </nav>
 
+<div id="downloadModal" class="modal">
+    <div class="modal-content download-modal">
+        <span class="close" onclick="closeDownloadModal()">&times;</span>
+        <div class="download-modal-icon">🚀</div>
+        <h2 style="color:var(--orange-primary); margin-bottom:5px;">MarsClient Download</h2>
+        <p style="color:var(--text-soft); margin-bottom:20px;">کلاینت ماینکرفت نسل بعدی</p>
+        
+        <div class="download-options">
+            <div class="download-option">
+                <div class="download-icon">🪟</div>
+                <div class="download-name">ویندوز</div>
+                <div class="download-version">Windows 10/11</div>
+                <button class="download-btn" onclick="showComingSoon('ویندوز')">به زودی ⏳</button>
+            </div>
+            
+            <div class="download-option">
+                <div class="download-icon">🐧</div>
+                <div class="download-name">لینوکس</div>
+                <div class="download-version">Ubuntu / Debian</div>
+                <button class="download-btn" onclick="showComingSoon('لینوکس')">به زودی ⏳</button>
+            </div>
+            
+            <div class="download-option">
+                <div class="download-icon">🍎</div>
+                <div class="download-name">مک</div>
+                <div class="download-version">macOS</div>
+                <button class="download-btn" onclick="showComingSoon('مک')">به زودی ⏳</button>
+            </div>
+        </div>
+        
+        <p style="color:#8899aa; font-size:0.8rem; margin-top:15px;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
+    </div>
+</div>
+
+<div id="comingSoonModal" class="modal">
+    <div class="modal-content" style="max-width:350px;">
+        <span class="close" onclick="closeComingSoon()">&times;</span>
+        <div style="text-align:center; padding:10px;">
+            <div style="font-size:4rem; margin-bottom:10px;">🔧</div>
+            <h3 style="color:var(--orange-primary);">در حال ساخت!</h3>
+            <p id="comingSoonText" style="color:var(--text-soft); margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
+            <button onclick="closeComingSoon()" class="btn" style="padding:10px 30px;">متوجه شدم</button>
+        </div>
+    </div>
+</div>
+
 <section class="section" style="padding-top: 120px;">
     <div style="text-align:center; margin-bottom:30px;"><h1 style="font-size:2.8rem; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:800;">سبد خرید</h1></div>
     <div id="cartItemsContainer" style="max-width:800px; margin:0 auto;"></div>
@@ -3177,6 +3522,40 @@ document.addEventListener('click', function(event) {
         btn.classList.remove('active');
     }
 });
+
+// ===== مودال دانلود =====
+function showDownloadModal() { 
+    document.getElementById('downloadModal').style.display='block'; 
+}
+
+function closeDownloadModal() { 
+    document.getElementById('downloadModal').style.display='none'; 
+}
+
+// ===== مودال "به زودی" =====
+function showComingSoon(os) {
+    const modal = document.getElementById('comingSoonModal');
+    const text = document.getElementById('comingSoonText');
+    const osNames = {
+        'ویندوز': 'ویندوز (Windows 10/11)',
+        'لینوکس': 'لینوکس (Ubuntu / Debian)',
+        'مک': 'مک (macOS)'
+    };
+    text.textContent = `نسخه ${osNames[os] || os} به زودی منتشر می‌شود`;
+    modal.style.display = 'block';
+}
+
+function closeComingSoon() {
+    document.getElementById('comingSoonModal').style.display='none';
+}
+
+// بستن مودال با کلیک خارج از آن
+window.onclick = function(event) {
+    const modal1 = document.getElementById('downloadModal');
+    const modal2 = document.getElementById('comingSoonModal');
+    if (event.target == modal1) modal1.style.display = 'none';
+    if (event.target == modal2) modal2.style.display = 'none';
+}
 
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
