@@ -677,11 +677,10 @@ document.getElementById('uploadForm').addEventListener('submit', function(e) {
     files = os.listdir(TEAM_FOLDER) if os.path.exists(TEAM_FOLDER) else []
     return render_template_string(html, members=members, files=files)
 
-# ========== پنل مدیریت پشتیبانی (بدون باگ) ==========
+# ========== پنل مدیریت پشتیبانی ==========
 @app.route('/admin/support', methods=['GET', 'POST'])
 def admin_support():
     try:
-        # بررسی لاگین
         if request.method == 'POST' and 'password' in request.form:
             if request.form.get('password') == 'parsa1901':
                 session['support_admin'] = True
@@ -689,7 +688,6 @@ def admin_support():
             else:
                 return "رمز عبور اشتباه است", 403
         
-        # اگر لاگین نکرده، فرم ورود نمایش بده
         if not session.get('support_admin'):
             return '''
             <!DOCTYPE html>
@@ -769,7 +767,6 @@ def admin_support():
             </html>
             '''
         
-        # ===== پردازش پاسخ یا حذف (بعد از لاگین) =====
         if request.method == 'POST':
             action = request.form.get('action')
             q_id = request.form.get('q_id')
@@ -797,7 +794,6 @@ def admin_support():
                         return f"خطا در حذف: {str(e)}", 500
                     return redirect(url_for('admin_support'))
         
-        # ===== نمایش لیست سوالات =====
         try:
             conn = sqlite3.connect(DB_FILE)
             questions = conn.execute('SELECT * FROM support_questions ORDER BY created_at DESC').fetchall()
@@ -805,7 +801,6 @@ def admin_support():
         except Exception as e:
             return f"خطا در اتصال به دیتابیس: {str(e)}", 500
         
-        # ===== صفحه مدیریت =====
         html = '''<!DOCTYPE html>
 <html dir="rtl">
 <head>
@@ -1127,8 +1122,8 @@ def admin_cosmetics():
 
 # ===================== STYLES =====================
 STYLES = """
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
 
 * {
     margin: 0;
@@ -1136,12 +1131,23 @@ STYLES = """
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: 'Vazirmatn', 'Poppins', system-ui, sans-serif;
-    background: linear-gradient(145deg, #fffaf5 0%, #ffffff 100%);
-    color: #1a1a1a;
+    background: #0a0a12;
+    color: #e8e8e8;
     line-height: 1.6;
     overflow-x: hidden;
+    min-height: 100vh;
+    transition: background 0.4s ease, color 0.4s ease;
+}
+
+::selection {
+    background: #f97316;
+    color: white;
 }
 
 :root {
@@ -1151,85 +1157,132 @@ body {
     --orange-soft: #fff7ed;
     --white-pure: #ffffff;
     --text-dark: #1e293b;
-    --text-soft: #334155;
+    --text-soft: #94a3b8;
     --shadow-sm: 0 10px 25px -5px rgba(249, 115, 22, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
     --shadow-md: 0 20px 25px -12px rgba(249, 115, 22, 0.12);
     --shadow-lg: 0 25px 50px -12px rgba(249, 115, 22, 0.25);
     --gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
     --gradient-glow: linear-gradient(135deg, #f97316 0%, #fbbf24 50%, #ea580c 100%);
+    --gradient-dark: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 100%);
     --success: #10b981;
     --danger: #ef4444;
     --online-green: #22c55e;
     --offline-red: #ef4444;
 }
 
+/* ===== تکسچر پس‌زمینه ===== */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at 20% 50%, rgba(249, 115, 22, 0.03) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 50%, rgba(249, 115, 22, 0.02) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 100%, rgba(249, 115, 22, 0.05) 0%, transparent 40%);
+    z-index: -1;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 25% 25%, rgba(249, 115, 22, 0.01) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(249, 115, 22, 0.01) 1px, transparent 1px);
+    background-size: 60px 60px;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* ===== انیمیشن‌ها ===== */
 @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(50px); }
+    from { opacity: 0; transform: translateY(60px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-60px); }
     to { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.9); }
+    from { opacity: 0; transform: scale(0.85); }
     to { opacity: 1; transform: scale(1); }
 }
 @keyframes slideInRight {
-    from { opacity: 0; transform: translateX(50px); }
+    from { opacity: 0; transform: translateX(80px); }
     to { opacity: 1; transform: translateX(0); }
 }
 @keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-50px); }
+    from { opacity: 0; transform: translateX(-80px); }
     to { opacity: 1; transform: translateX(0); }
 }
 @keyframes glowPulse {
-    0% { text-shadow: 0 0 0px rgba(249, 115, 22, 0); }
-    50% { text-shadow: 0 0 20px rgba(249, 115, 22, 0.6), 0 0 5px rgba(249, 115, 22, 0.3); }
-    100% { text-shadow: 0 0 0px rgba(249, 115, 22, 0); }
+    0%, 100% { text-shadow: 0 0 0px rgba(249, 115, 22, 0); }
+    50% { text-shadow: 0 0 40px rgba(249, 115, 22, 0.4), 0 0 80px rgba(249, 115, 22, 0.1); }
+}
+@keyframes glowPulseFeature {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.4); opacity: 1; }
+}
+@keyframes orbitRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 @keyframes float {
-    0% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-15px) rotate(2deg); }
-    100% { transform: translateY(0px) rotate(0deg); }
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-25px) rotate(5deg); }
 }
 @keyframes floatReverse {
-    0% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(10px) rotate(-2deg); }
-    100% { transform: translateY(0px) rotate(0deg); }
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(20px) rotate(-5deg); }
+}
+@keyframes floatSlow {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
 }
 @keyframes borderPulse {
-    0% { border-color: rgba(249, 115, 22, 0.3); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.2); }
-    50% { border-color: rgba(249, 115, 22, 0.8); box-shadow: 0 0 0 12px rgba(249, 115, 22, 0); }
-    100% { border-color: rgba(249, 115, 22, 0.3); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+    0% { border-color: rgba(249, 115, 22, 0.2); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.1); }
+    50% { border-color: rgba(249, 115, 22, 0.8); box-shadow: 0 0 0 20px rgba(249, 115, 22, 0); }
+    100% { border-color: rgba(249, 115, 22, 0.2); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
 }
 @keyframes rotateIn {
-    from { opacity: 0; transform: rotate(-10deg) scale(0.9); }
+    from { opacity: 0; transform: rotate(-20deg) scale(0.7); }
     to { opacity: 1; transform: rotate(0deg) scale(1); }
 }
 @keyframes bounce {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+    50% { transform: translateY(-15px); }
 }
 @keyframes zoomIn {
-    from { opacity: 0; transform: scale(0.5); }
+    from { opacity: 0; transform: scale(0.4); }
     to { opacity: 1; transform: scale(1); }
 }
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    50% { transform: scale(1.06); }
 }
 @keyframes wave {
     0%, 100% { transform: translateY(0); }
-    25% { transform: translateY(-5px); }
-    75% { transform: translateY(5px); }
+    25% { transform: translateY(-8px); }
+    75% { transform: translateY(8px); }
 }
 @keyframes blink {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.3; }
 }
 @keyframes blinkRed {
     0%, 100% { opacity: 1; border-color: var(--offline-red); color: var(--offline-red); }
     50% { opacity: 0.3; border-color: #ff6b6b; color: #ff6b6b; }
 }
 @keyframes countUp {
-    0% { opacity: 0; transform: scale(0.8); }
+    0% { opacity: 0; transform: scale(0.5); }
     100% { opacity: 1; transform: scale(1); }
 }
 @keyframes onlineFlash {
@@ -1240,59 +1293,84 @@ body {
 }
 @keyframes offlinePulse {
     0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
     100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-20px); }
+    from { opacity: 0; transform: translateY(-30px); }
     to { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideUp {
     from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 0; transform: translateY(-30px); }
 }
 @keyframes menuBounce {
-    0% { transform: scale(0.8) translateY(-10px); opacity: 0; }
-    50% { transform: scale(1.05) translateY(0); opacity: 1; }
+    0% { transform: scale(0.6) translateY(-20px); opacity: 0; }
+    60% { transform: scale(1.08) translateY(8px); opacity: 1; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
 }
+@keyframes shimmer {
+    0% { background-position: -300% center; }
+    100% { background-position: 300% center; }
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes neonGlow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.3)); }
+    50% { filter: drop-shadow(0 0 30px rgba(249, 115, 22, 0.6)); }
+}
 
-.animate-fade-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards; }
-.animate-fade-scale { animation: fadeInScale 0.6s ease-out forwards; }
-.animate-slide-right { animation: slideInRight 0.7s ease forwards; }
-.animate-slide-left { animation: slideInLeft 0.7s ease forwards; }
-.animate-float { animation: float 4s ease-in-out infinite; }
-.animate-float-reverse { animation: floatReverse 4s ease-in-out infinite; }
+.animate-fade-up { animation: fadeInUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-fade-down { animation: fadeInDown 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-fade-scale { animation: fadeInScale 0.7s ease-out forwards; }
+.animate-slide-right { animation: slideInRight 0.8s ease forwards; }
+.animate-slide-left { animation: slideInLeft 0.8s ease forwards; }
+.animate-float { animation: float 5s ease-in-out infinite; }
+.animate-float-reverse { animation: floatReverse 5s ease-in-out infinite; }
+.animate-float-slow { animation: floatSlow 4s ease-in-out infinite; }
 .animate-glow { animation: glowPulse 3s infinite; }
-.animate-rotate { animation: rotateIn 0.6s ease forwards; }
-.animate-bounce { animation: bounce 0.5s ease; }
-.animate-border-pulse { animation: borderPulse 2s infinite; }
-.animate-zoom { animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-.animate-pulse { animation: pulse 2s ease-in-out infinite; }
-.animate-wave { animation: wave 2s ease-in-out infinite; }
-.animate-blink { animation: blink 1.5s ease-in-out infinite; }
-.animate-blink-red { animation: blinkRed 1.2s ease-in-out infinite; }
-.animate-count { animation: countUp 0.3s ease forwards; }
+.animate-rotate { animation: rotateIn 0.7s ease forwards; }
+.animate-bounce { animation: bounce 0.7s ease; }
+.animate-border-pulse { animation: borderPulse 2.5s infinite; }
+.animate-zoom { animation: zoomIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.animate-pulse { animation: pulse 2.5s ease-in-out infinite; }
+.animate-wave { animation: wave 2.5s ease-in-out infinite; }
+.animate-blink { animation: blink 1.8s ease-in-out infinite; }
+.animate-blink-red { animation: blinkRed 1.4s ease-in-out infinite; }
+.animate-count { animation: countUp 0.5s ease forwards; }
 .animate-online-flash { animation: onlineFlash 1s ease forwards; }
 .animate-offline-pulse { animation: offlinePulse 1.5s ease-in-out infinite; }
-.animate-slide-down { animation: slideDown 0.3s ease forwards; }
-.animate-slide-up { animation: slideUp 0.3s ease forwards; }
-.animate-menu-bounce { animation: menuBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.animate-slide-down { animation: slideDown 0.4s ease forwards; }
+.animate-slide-up { animation: slideUp 0.4s ease forwards; }
+.animate-menu-bounce { animation: menuBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+.animate-gradient { background-size: 300% 300%; animation: gradientShift 5s ease infinite; }
+.animate-spin { animation: spin 1.2s linear infinite; }
+.animate-neon { animation: neonGlow 2s ease-in-out infinite; }
 
 .scroll-animate {
     opacity: 0;
-    transform: translateY(50px);
-    transition: all 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    transform: translateY(80px);
+    transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .scroll-animate.visible {
     opacity: 1;
     transform: translateY(0);
 }
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
-.delay-5 { animation-delay: 0.5s; }
+.delay-1 { animation-delay: 0.1s; transition-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; transition-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; transition-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; transition-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; transition-delay: 0.5s; }
+.delay-6 { animation-delay: 0.6s; transition-delay: 0.6s; }
+.delay-7 { animation-delay: 0.7s; transition-delay: 0.7s; }
+.delay-8 { animation-delay: 0.8s; transition-delay: 0.8s; }
 
 /* ===== نوار ناوبری ===== */
 .navbar {
@@ -1300,204 +1378,222 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 0.8rem 5%;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(12px);
+    background: rgba(10, 10, 18, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     position: fixed;
     width: 100%;
     top: 0;
     z-index: 1000;
-    border-bottom: 1px solid var(--orange-light);
+    border-bottom: 1px solid rgba(249, 115, 22, 0.08);
+    box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s ease;
 }
+.navbar.scrolled {
+    padding: 0.5rem 5%;
+    background: rgba(10, 10, 18, 0.95);
+    box-shadow: 0 8px 50px rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(249, 115, 22, 0.15);
+}
+.nav-left { display: flex; align-items: center; gap: 10px; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
 
-.nav-left {
+.logo-wrapper {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 5px;
+    position: relative;
 }
+.logo {
+    font-size: 2rem;
+    font-weight: 900;
+    font-family: 'Poppins', 'Vazirmatn', sans-serif;
+    background: var(--gradient-glow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-decoration: none;
+    letter-spacing: -0.5px;
+    transition: all 0.4s ease;
+}
+.logo-icon {
+    font-size: 0.8rem;
+    animation: blink 1.5s infinite;
+    -webkit-text-fill-color: initial;
+    color: var(--orange-primary);
+}
+.logo:hover { transform: scale(1.03); }
 
-.nav-right {
+/* ===== دکمه تغییر تم ===== */
+.theme-toggle {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
-    gap: 15px;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    font-size: 1.1rem;
+    color: #e8e8e8;
+}
+.theme-toggle:hover {
+    background: rgba(249, 115, 22, 0.15);
+    border-color: rgba(249, 115, 22, 0.3);
+    transform: rotate(40deg) scale(1.05);
+}
+.theme-toggle:active { transform: scale(0.9); }
+
+.menu-theme-toggle {
+    background: transparent;
+    border: none;
+    color: #c8c8d4;
+    font-weight: 500;
+    padding: 12px 18px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: right;
+    font-family: inherit;
+}
+.menu-theme-toggle:hover {
+    background: rgba(249, 115, 22, 0.1);
+    color: var(--orange-primary);
+}
+.menu-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    margin: 4px 10px;
 }
 
 /* ===== منوی همبرگری ===== */
-.hamburger-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
+.hamburger-wrapper { position: relative; display: flex; align-items: center; }
 .hamburger {
     display: flex;
     flex-direction: column;
     gap: 5px;
     cursor: pointer;
-    padding: 8px;
-    background: transparent;
+    padding: 8px 10px;
+    background: rgba(249, 115, 22, 0.08);
     border: none;
+    border-radius: 12px;
     transition: all 0.3s ease;
 }
-
+.hamburger:hover { background: rgba(249, 115, 22, 0.15); }
 .hamburger span {
     display: block;
     width: 28px;
-    height: 3px;
+    height: 2.5px;
     background: var(--orange-primary);
     border-radius: 4px;
     transition: all 0.3s ease;
 }
-
-.hamburger:hover span {
-    background: var(--orange-dark);
-}
-
-.hamburger.active span:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 6px);
-}
-.hamburger.active span:nth-child(2) {
-    opacity: 0;
-}
-.hamburger.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -6px);
-}
-
+.hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 6px); }
+.hamburger.active span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -6px); }
 .mobile-menu {
     display: none;
     position: absolute;
-    top: 50px;
+    top: 55px;
     right: 0;
-    background: var(--white-pure);
+    background: rgba(10, 10, 18, 0.98);
+    backdrop-filter: blur(20px);
     border-radius: 20px;
-    padding: 15px 10px;
-    min-width: 200px;
-    border: 1px solid var(--orange-light);
-    box-shadow: var(--shadow-lg);
+    padding: 12px 8px;
+    min-width: 220px;
+    border: 1px solid rgba(249, 115, 22, 0.1);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     z-index: 999;
-    animation: menuBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation: menuBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
-
-.mobile-menu.active {
-    display: flex;
-}
-
+.mobile-menu.active { display: flex; }
 .mobile-menu a {
     text-decoration: none;
-    color: var(--text-dark);
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: 12px;
-    transition: all 0.2s ease;
+    color: #c8c8d4;
+    font-weight: 500;
+    padding: 12px 18px;
+    border-radius: 14px;
+    transition: all 0.3s ease;
     font-size: 0.95rem;
     display: flex;
     align-items: center;
     gap: 12px;
 }
-
 .mobile-menu a:hover {
-    background: var(--orange-soft);
+    background: rgba(249, 115, 22, 0.1);
     color: var(--orange-primary);
+    transform: translateX(-5px);
 }
-
-.mobile-menu a.support-link {
-    color: #ff4757;
-}
-.mobile-menu a.support-link:hover {
-    background: rgba(255, 71, 87, 0.1);
-}
-
-.logo {
-    font-size: 2rem;
-    font-weight: 800;
-    font-family: 'Poppins', 'Vazirmatn', sans-serif;
-    background: var(--gradient-glow);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -0.5px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
+.mobile-menu a.support-link { color: #ff4757; }
+.mobile-menu a.support-link:hover { background: rgba(255, 71, 87, 0.1); }
 
 .online-badge {
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(34, 197, 94, 0.1);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    gap: 8px;
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.15);
     padding: 5px 12px;
     border-radius: 50px;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     font-weight: 600;
     color: var(--online-green);
     transition: all 0.3s ease;
     white-space: nowrap;
 }
+.online-badge:hover { transform: scale(1.03); background: rgba(34, 197, 94, 0.12); }
 .online-badge.offline-flash {
     background: rgba(239, 68, 68, 0.15);
     border-color: var(--offline-red);
     color: var(--offline-red);
-    animation: offlinePulse 0.6s ease-out;
 }
-.online-number {
-    font-weight: 800;
-    font-size: 1rem;
-    margin: 0 2px;
-    transition: all 0.3s ease;
-}
+.online-number { font-weight: 800; font-size: 1rem; margin: 0 2px; }
 .online-dot {
-    width: 8px;
-    height: 8px;
+    width: 8px; height: 8px;
     background-color: var(--online-green);
     border-radius: 50%;
-    animation: blink 1.5s ease-in-out infinite;
-    box-shadow: 0 0 5px var(--online-green);
-    transition: all 0.3s ease;
+    animation: blink 1.8s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
 }
 .online-dot.offline {
     background-color: var(--offline-red);
-    animation: blinkRed 1.2s ease-in-out infinite;
-    box-shadow: 0 0 5px var(--offline-red);
+    animation: blinkRed 1.4s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
-
 .cart-icon {
-    color: var(--text-dark);
+    color: #c8c8d4;
     text-decoration: none;
     font-size: 1.2rem;
     position: relative;
     transition: all 0.3s ease;
+    padding: 6px;
+    border-radius: 50%;
 }
-.cart-icon:hover {
-    transform: scale(1.1);
-    color: var(--orange-primary);
-}
+.cart-icon:hover { transform: scale(1.1); background: rgba(249, 115, 22, 0.1); color: var(--orange-primary); }
 .cart-icon span {
     background: var(--orange-primary);
     border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 0.7rem;
+    padding: 2px 7px;
+    font-size: 0.65rem;
     margin-right: 4px;
     color: white;
-    font-weight: bold;
+    font-weight: 700;
+    min-width: 20px;
+    display: inline-block;
+    text-align: center;
 }
 
-.hero h1, .section-title, .cosmetic-name, .developer-name {
-    font-family: 'Poppins', 'Vazirmatn', sans-serif;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-}
-.hero h1 {
-    font-size: 4.5rem;
-    background: var(--gradient-glow);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 1rem;
-    animation: fadeInUp 0.6s ease, glowPulse 3s infinite;
-}
-
+/* ===== هیرو ===== */
 .hero {
-    min-height: 90vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1510,46 +1606,85 @@ body {
 .hero::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
+    top: -40%;
+    left: -40%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 60%);
-    animation: float 20s ease-in-out infinite;
+    background: radial-gradient(ellipse at 30% 40%, rgba(249, 115, 22, 0.06) 0%, transparent 50%);
+    animation: float 30s ease-in-out infinite;
     pointer-events: none;
+}
+.hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    right: -30%;
+    width: 180%;
+    height: 180%;
+    background: radial-gradient(ellipse at 70% 60%, rgba(249, 115, 22, 0.04) 0%, transparent 40%);
+    animation: floatReverse 25s ease-in-out infinite;
+    pointer-events: none;
+}
+.hero h1 {
+    font-size: 6rem;
+    font-weight: 900;
+    font-family: 'Poppins', 'Vazirmatn', sans-serif;
+    background: var(--gradient-glow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1.2rem;
+    animation: fadeInUp 0.8s ease, glowPulse 4s infinite;
+    position: relative;
+    z-index: 1;
+    letter-spacing: -2px;
+}
+.hero .description {
+    font-size: 1.3rem;
+    max-width: 750px;
+    margin: 0 auto 2.5rem auto;
+    color: #94a3b8;
+    font-weight: 400;
+    position: relative;
+    z-index: 1;
+    line-height: 1.9;
+}
+.hero .description span {
+    color: var(--orange-primary);
+    font-weight: 600;
 }
 .beta-tag {
     display: inline-block;
-    background: var(--orange-light);
-    padding: 0.5rem 1.5rem;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05));
+    padding: 0.6rem 2rem;
     border-radius: 40px;
     font-size: 0.85rem;
     font-weight: 700;
-    color: var(--orange-dark);
+    color: var(--orange-primary);
     margin-bottom: 1.5rem;
-    animation: fadeInUp 0.5s ease, borderPulse 2s infinite;
+    animation: fadeInUp 0.6s ease, borderPulse 2.5s infinite;
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(10px);
 }
-.hero .description {
-    font-size: 1.2rem;
-    max-width: 700px;
-    margin: 0 auto 2rem auto;
-    color: var(--text-soft);
-    font-weight: 500;
-}
+
 .btn {
     background: var(--gradient);
     color: white;
-    padding: 14px 36px;
-    border-radius: 50px;
+    padding: 18px 44px;
+    border-radius: 60px;
     font-weight: 700;
-    font-size: 1rem;
-    display: inline-block;
+    font-size: 1.05rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
     text-decoration: none;
+    box-shadow: 0 8px 30px rgba(249, 115, 22, 0.3);
 }
 .btn::before {
     content: '';
@@ -1558,36 +1693,106 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.5s ease;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.7s ease;
 }
-.btn:hover::before {
-    left: 100%;
-}
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(249, 115, 22, 0.35);
-}
+.btn:hover::before { left: 100%; }
+.btn:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 15px 45px rgba(249, 115, 22, 0.4); }
+.btn:active { transform: scale(0.96); }
 .btn-outline {
     background: transparent;
-    border: 2px solid var(--orange-primary);
+    border: 2px solid rgba(249, 115, 22, 0.4);
     color: var(--orange-primary);
-    margin-left: 15px;
+    box-shadow: none;
 }
-.btn-outline:hover {
-    background: var(--orange-primary);
-    color: white;
-    transform: translateY(-3px);
+.btn-outline:hover { background: var(--orange-primary); color: white; transform: translateY(-5px); box-shadow: 0 15px 45px rgba(249, 115, 22, 0.3); }
+
+.section { padding: 100px 5%; position: relative; }
+
+/* ===== بخش ویژگی‌ها با هاله ===== */
+.features-header {
+    text-align: center;
+    position: relative;
+    margin-bottom: 3rem;
 }
-.section {
-    padding: 80px 5%;
+
+.features-glow-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    height: 120px;
 }
+
+.features-glow {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.05) 40%, transparent 70%);
+    animation: glowPulseFeature 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.features-orbit {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    animation: orbitRotate 12s linear infinite;
+}
+
+.orbit-icon {
+    position: absolute;
+    font-size: 1.8rem;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 10, 18, 0.8);
+    border-radius: 50%;
+    border: 2px solid rgba(249, 115, 22, 0.2);
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.1);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.orbit-icon:hover {
+    transform: scale(1.3);
+    border-color: var(--orange-primary);
+    box-shadow: 0 0 30px rgba(249, 115, 22, 0.3);
+}
+
+.orbit-icon.icon-1 { top: 0; left: 50%; transform: translateX(-50%); }
+.orbit-icon.icon-2 { top: 50%; right: 0; transform: translateY(-50%); }
+.orbit-icon.icon-3 { bottom: 0; left: 50%; transform: translateX(-50%); }
+.orbit-icon.icon-4 { top: 50%; left: 0; transform: translateY(-50%); }
+.orbit-icon.icon-5 { top: 15%; right: 8%; }
+.orbit-icon.icon-6 { bottom: 15%; left: 8%; }
+
+body.light-mode .orbit-icon {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(249, 115, 22, 0.3);
+}
+
+.features-subtitle {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    margin-top: -0.5rem;
+    margin-bottom: 2rem;
+}
+
+body.light-mode .features-subtitle {
+    color: #64748b;
+}
+
 .section-title {
     text-align: center;
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 800;
-    margin-bottom: 3rem;
-    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+    color: #e8e8e8;
     position: relative;
 }
 .section-title span {
@@ -1598,78 +1803,106 @@ body {
 .section-title span::after {
     content: '';
     position: absolute;
-    bottom: -8px;
+    bottom: -12px;
     left: 0;
     width: 100%;
-    height: 3px;
+    height: 4px;
     background: var(--gradient);
     transform: scaleX(0);
-    transition: transform 0.5s ease;
+    transition: transform 0.7s ease;
     transform-origin: right;
+    border-radius: 4px;
 }
-.section-title:hover span::after {
-    transform: scaleX(1);
-    transform-origin: left;
-}
+.section-title:hover span::after { transform: scaleX(1); transform-origin: left; }
+
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2rem;
+    gap: 2.5rem;
     max-width: 1300px;
     margin: 0 auto;
 }
 .feature-card {
-    background: var(--white-pure);
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 28px;
-    padding: 2rem;
+    padding: 2.8rem 2rem;
     text-align: center;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 1px solid var(--orange-light);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
 }
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient);
+    transform: scaleX(0);
+    transition: transform 0.5s ease;
+}
+.feature-card:hover::before { transform: scaleX(1); }
 .feature-card:hover {
-    transform: translateY(-12px) scale(1.02);
-    border-color: var(--orange-primary);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-18px) scale(1.02);
+    border-color: rgba(249, 115, 22, 0.15);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.05);
 }
 .feature-icon {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
+    font-size: 3.8rem;
+    margin-bottom: 1.2rem;
     display: inline-block;
-    animation: float 3s ease-in-out infinite;
+    animation: float 5s ease-in-out infinite;
 }
 .feature-card h3 {
     font-size: 1.4rem;
     margin-bottom: 0.8rem;
     font-weight: 700;
+    color: #e8e8e8;
 }
-.feature-card p {
-    color: var(--text-soft);
-    line-height: 1.6;
-}
+.feature-card p { color: #94a3b8; line-height: 1.9; }
+
 .team-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
+    gap: 2.5rem;
     max-width: 1200px;
     margin: 0 auto;
 }
 .team-card {
-    background: var(--white-pure);
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 28px;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 1px solid var(--orange-light);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.04);
     text-align: center;
     position: relative;
+    backdrop-filter: blur(10px);
 }
 .team-card:hover {
-    transform: translateY(-12px);
-    border-color: var(--orange-primary);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-18px);
+    border-color: rgba(249, 115, 22, 0.15);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.05);
 }
+.team-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+.team-card:hover::before { opacity: 1; }
 .team-avatar {
-    width: 120px;
-    height: 120px;
+    width: 130px;
+    height: 130px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1677,39 +1910,28 @@ body {
     margin: 30px auto 20px;
     font-size: 3rem;
     color: white;
-    transition: all 0.3s ease;
+    transition: all 0.5s ease;
     background: var(--gradient);
     overflow: hidden;
+    box-shadow: 0 10px 35px rgba(249, 115, 22, 0.15);
 }
 .team-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 100%; height: 100%; object-fit: cover;
 }
 .team-card:hover .team-avatar {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(249, 115, 22, 0.5);
+    transform: scale(1.1);
+    box-shadow: 0 0 50px rgba(249, 115, 22, 0.2);
 }
-.team-name {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--text-dark);
-    margin-bottom: 5px;
-}
-.team-role {
-    font-size: 0.9rem;
-    color: var(--orange-primary);
-    font-weight: 600;
-    margin-bottom: 8px;
-}
+.team-name { font-size: 1.5rem; font-weight: 800; color: #e8e8e8; margin-bottom: 4px; }
+.team-role { font-size: 0.9rem; color: var(--orange-primary); font-weight: 600; margin-bottom: 6px; }
 .team-username {
     font-size: 0.85rem;
-    color: var(--text-soft);
-    background: var(--orange-soft);
+    color: #94a3b8;
+    background: rgba(255,255,255,0.05);
     display: inline-block;
-    padding: 5px 12px;
+    padding: 5px 16px;
     border-radius: 50px;
-    margin: 10px auto;
+    margin: 8px auto;
 }
 .team-badge {
     position: absolute;
@@ -1717,125 +1939,90 @@ body {
     right: 15px;
     background: var(--gradient);
     color: white;
-    padding: 4px 12px;
+    padding: 4px 16px;
     border-radius: 50px;
     font-size: 0.7rem;
     font-weight: 700;
+    box-shadow: 0 5px 20px rgba(249, 115, 22, 0.2);
 }
 .team-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.7rem;
-    margin-top: 5px;
-    padding: 2px 8px;
-    border-radius: 20px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; margin-top: 6px; padding: 4px 12px;
+    border-radius: 20px; font-weight: 600;
 }
-.team-status.online {
-    color: var(--online-green);
-    background: rgba(34, 197, 94, 0.1);
-}
+.team-status.online { color: var(--online-green); background: rgba(34, 197, 94, 0.08); }
 .status-dot-online {
-    width: 6px;
-    height: 6px;
+    width: 7px; height: 7px;
     background-color: var(--online-green);
     border-radius: 50%;
-    animation: blink 1.5s ease-in-out infinite;
+    animation: blink 1.8s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
 }
 
 .stats-section {
-    background: linear-gradient(135deg, var(--orange-soft) 0%, #fff5eb 100%);
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), rgba(249, 115, 22, 0.02));
     border-radius: 48px;
     margin: 20px 5%;
-    padding: 3rem 2rem;
+    padding: 4.5rem 2rem;
+    border: 1px solid rgba(249, 115, 22, 0.05);
+    backdrop-filter: blur(10px);
 }
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 2rem;
+    gap: 2.5rem;
     text-align: center;
 }
-.stat-item {
-    transition: all 0.3s ease;
-}
-.stat-item:hover {
-    transform: translateY(-5px);
-}
+.stat-item:hover { transform: translateY(-8px); }
 .stat-number {
-    font-size: 3rem;
-    font-weight: 800;
+    font-size: 4rem;
+    font-weight: 900;
     font-family: 'Poppins', monospace;
     color: var(--orange-primary);
     margin-bottom: 0.5rem;
-    animation: glowPulse 2s infinite;
+    animation: glowPulse 3s infinite;
 }
-.stat-label {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-soft);
-}
+.stat-label { font-size: 1rem; font-weight: 500; color: #94a3b8; }
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
+    gap: 2.5rem;
     max-width: 1200px;
     margin: 0 auto;
 }
 .cosmetic-card {
-    background: var(--white-pure);
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 28px;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 1px solid var(--orange-light);
-    box-shadow: var(--shadow-sm);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(10px);
 }
 .cosmetic-card:hover {
-    transform: translateY(-12px) scale(1.02);
-    border-color: var(--orange-primary);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-18px) scale(1.02);
+    border-color: rgba(249, 115, 22, 0.15);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.05);
 }
 .cosmetic-img {
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    padding: 25px;
+    display: flex; justify-content: center; align-items: center;
     height: 200px;
-    background: var(--orange-soft);
-    transition: all 0.3s ease;
+    background: rgba(249, 115, 22, 0.03);
+    transition: all 0.4s ease;
 }
-.cosmetic-card:hover .cosmetic-img {
-    background: var(--orange-light);
-}
+.cosmetic-card:hover .cosmetic-img { background: rgba(249, 115, 22, 0.06); }
 .cosmetic-img img {
-    max-width: 100%;
-    max-height: 160px;
+    max-width: 100%; max-height: 160px;
     border-radius: 16px;
-    transition: transform 0.4s ease;
+    transition: transform 0.6s ease;
 }
-.cosmetic-card:hover .cosmetic-img img {
-    transform: scale(1.1);
-}
-.cosmetic-info {
-    padding: 20px;
-    text-align: center;
-}
-.cosmetic-name {
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-}
-.cosmetic-price {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--orange-primary);
-    margin: 12px 0;
-}
-.old-price {
-    font-size: 0.85rem;
-    text-decoration: line-through;
-    color: var(--text-soft);
-    margin-left: 8px;
-}
+.cosmetic-card:hover .cosmetic-img img { transform: scale(1.1) rotate(-3deg); }
+.cosmetic-info { padding: 20px; text-align: center; }
+.cosmetic-name { font-size: 1.2rem; font-weight: 700; color: #e8e8e8; margin-bottom: 6px; }
+.cosmetic-price { font-size: 1.4rem; font-weight: 800; color: var(--orange-primary); margin: 12px 0; }
+.old-price { font-size: 0.85rem; text-decoration: line-through; color: #64748b; margin-left: 8px; }
 .buy-btn {
     background: var(--gradient);
     border: none;
@@ -1852,109 +2039,108 @@ body {
 .buy-btn::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.5s ease;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.6s ease;
 }
-.buy-btn:hover::before {
-    left: 100%;
-}
-.buy-btn:hover {
-    transform: scale(0.98);
-    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4);
-}
+.buy-btn:hover::before { left: 100%; }
+.buy-btn:hover { transform: scale(0.97); box-shadow: 0 10px 35px rgba(249, 115, 22, 0.3); }
 .category-menu {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
+    display: flex; flex-wrap: wrap;
+    justify-content: center; gap: 14px;
     margin-bottom: 50px;
 }
 .category-btn {
-    background: var(--white-pure);
-    border: 1px solid var(--orange-light);
-    color: var(--text-dark);
-    padding: 10px 28px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #c8c8d4;
+    padding: 10px 32px;
     border-radius: 50px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-.category-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(249,115,22,0.15), transparent);
-    transition: left 0.5s ease;
-}
-.category-btn:hover::before {
-    left: 100%;
+    font-size: 0.95rem;
 }
 .category-btn:hover, .category-btn.active {
     background: var(--gradient);
     border-color: transparent;
     color: white;
     transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
-}
-/* ===== مودال دانلود ===== */
-.download-modal {
-    max-width: 500px !important;
-    padding: 30px !important;
+    box-shadow: 0 10px 35px rgba(249, 115, 22, 0.2);
 }
 
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(15px);
+    animation: fadeInUp 0.3s ease;
+}
+.modal-content {
+    background: rgba(10, 10, 18, 0.98);
+    margin: 10% auto;
+    padding: 40px;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 32px;
+    text-align: center;
+    position: relative;
+    border: 1px solid rgba(249, 115, 22, 0.08);
+    animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4);
+}
+.modal-content .close {
+    position: absolute;
+    left: 18px; top: 12px;
+    font-size: 30px;
+    cursor: pointer;
+    color: #64748b;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.03);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center; justify-content: center;
+    border: none;
+}
+.modal-content .close:hover {
+    transform: rotate(90deg) scale(1.1);
+    color: var(--orange-primary);
+    background: rgba(249, 115, 22, 0.08);
+}
+.download-modal-icon { font-size: 4rem; margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
+.download-modal h2 { font-size: 1.8rem; font-weight: 800; color: #e8e8e8; margin-bottom: 5px; }
 .download-options {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 15px;
-    margin: 20px 0;
+    margin: 25px 0;
 }
-
 .download-option {
-    background: var(--orange-soft);
+    background: rgba(255,255,255,0.03);
     border-radius: 20px;
-    padding: 20px 15px;
+    padding: 22px 15px;
     text-align: center;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
+    transition: all 0.4s ease;
+    border: 1px solid rgba(255,255,255,0.04);
 }
-
 .download-option:hover {
-    transform: translateY(-5px);
-    border-color: var(--orange-primary);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-8px);
+    border-color: rgba(249, 115, 22, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
-
-.download-icon {
-    font-size: 2.5rem;
-    margin-bottom: 8px;
-}
-
-.download-name {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--text-dark);
-}
-
-.download-version {
-    font-size: 0.75rem;
-    color: var(--text-soft);
-    margin: 4px 0 12px 0;
-}
-
+.download-icon { font-size: 2.8rem; margin-bottom: 8px; }
+.download-name { font-weight: 700; font-size: 1.1rem; color: #e8e8e8; }
+.download-version { font-size: 0.75rem; color: #64748b; margin: 4px 0 12px 0; }
 .download-btn {
     background: var(--gradient);
     color: white;
     border: none;
-    padding: 8px 20px;
+    padding: 10px 20px;
     border-radius: 50px;
     font-weight: 700;
     font-size: 0.85rem;
@@ -1962,352 +2148,378 @@ body {
     transition: all 0.3s ease;
     width: 100%;
 }
+.download-btn:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(249, 115, 22, 0.3); }
+.download-btn:active { transform: scale(0.95); }
 
-.download-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4);
-}
-
-.download-btn:active {
-    transform: scale(0.95);
-}
-
-@media (max-width: 480px) {
-    .download-options {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    .download-option {
-        padding: 15px;
-    }
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 2000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    backdrop-filter: blur(8px);
-    animation: fadeInUp 0.3s ease;
-}
-.modal-content {
-    background: var(--white-pure);
-    margin: 10% auto;
-    padding: 30px;
-    width: 90%;
-    max-width: 400px;
-    border-radius: 28px;
-    text-align: center;
-    position: relative;
-    border: 1px solid var(--orange-light);
-    animation: zoomIn 0.4s ease;
-}
-.modal-content .close {
-    position: absolute;
-    left: 15px;
-    top: 10px;
-    font-size: 28px;
-    cursor: pointer;
-    color: var(--text-soft);
-    transition: all 0.3s ease;
-}
-.modal-content .close:hover {
-    transform: rotate(90deg);
-    color: var(--orange-primary);
-}
-.download-modal-icon {
-    font-size: 3rem;
-    margin-bottom: 15px;
-    animation: float 2s ease-in-out infinite;
-}
-.download-modal-text {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--orange-primary);
-    margin-bottom: 10px;
-}
-.download-modal-sub {
-    font-size: 0.9rem;
-    color: var(--text-soft);
-}
 footer {
     text-align: center;
-    padding: 3rem;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    color: #8899aa;
+    padding: 4rem;
+    background: linear-gradient(135deg, #06060a 0%, #0a0a18 100%);
+    color: #64748b;
     margin-top: 3rem;
+    border-top: 1px solid rgba(255,255,255,0.03);
 }
-.footer-content {
-    max-width: 1200px;
-    margin: 0 auto;
-}
+.footer-content { max-width: 1200px; margin: 0 auto; }
 .footer-stats {
-    display: flex;
-    justify-content: center;
-    gap: 3rem;
-    margin-bottom: 2rem;
+    display: flex; justify-content: center;
+    gap: 4rem; margin-bottom: 2.5rem;
     flex-wrap: wrap;
 }
-.footer-stat {
-    text-align: center;
-}
 .footer-stat-value {
-    font-size: 2rem;
-    font-weight: 800;
+    font-size: 2.2rem;
+    font-weight: 900;
     font-family: 'Poppins', monospace;
     color: var(--orange-primary);
 }
-.footer-stat-label {
-    font-size: 0.85rem;
-    color: #8899aa;
-}
+.footer-stat-label { font-size: 0.85rem; color: #64748b; }
 .footer-copyright {
     font-size: 0.85rem;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    padding-top: 2rem;
 }
 
 .faq-widget {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
+    bottom: 25px;
+    left: 25px;
     z-index: 9999;
 }
 .faq-button {
-    width: 55px;
-    height: 55px;
+    width: 60px; height: 60px;
     border-radius: 50%;
     background: var(--gradient);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    box-shadow: 0 10px 40px rgba(249, 115, 22, 0.25);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.3s ease;
     border: none;
     color: white;
     font-size: 28px;
-    animation: float 3s ease-in-out infinite;
+    animation: float 3.5s ease-in-out infinite;
 }
-.faq-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 10px 30px rgba(249, 115, 22, 0.5);
-}
+.faq-button:hover { transform: scale(1.12); box-shadow: 0 15px 50px rgba(249, 115, 22, 0.35); }
 .faq-panel {
     position: absolute;
-    bottom: 70px;
+    bottom: 75px;
     left: 0;
-    width: 340px;
-    max-height: 480px;
-    background: var(--white-pure);
+    width: 360px;
+    max-height: 520px;
+    background: rgba(10, 10, 18, 0.98);
     border-radius: 24px;
-    border: 1px solid var(--orange-light);
-    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(249, 115, 22, 0.06);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     display: none;
     flex-direction: column;
-    animation: fadeInUp 0.3s ease;
+    animation: fadeInUp 0.4s ease;
+    backdrop-filter: blur(20px);
 }
-.faq-panel.active {
-    display: flex;
-}
+.faq-panel.active { display: flex; }
 .faq-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    background: linear-gradient(135deg, var(--orange-light), var(--orange-soft));
-    border-bottom: 1px solid var(--orange-light);
-    gap: 8px;
+    display: flex; align-items: center;
+    padding: 12px 16px;
+    background: rgba(249, 115, 22, 0.04);
+    border-bottom: 1px solid rgba(249, 115, 22, 0.06);
+    gap: 6px;
 }
 .faq-tab {
     background: transparent;
     border: none;
-    padding: 8px 12px;
+    padding: 8px 16px;
     border-radius: 30px;
     font-weight: 600;
     cursor: pointer;
-    color: var(--text-soft);
+    color: #94a3b8;
     transition: all 0.2s;
     font-size: 0.85rem;
 }
-.faq-tab.active {
-    background: var(--orange-primary);
-    color: white;
-}
-.faq-tab:hover:not(.active) {
-    background: var(--orange-soft);
-    color: var(--orange-primary);
-}
+.faq-tab.active { background: var(--gradient); color: white; box-shadow: 0 4px 20px rgba(249, 115, 22, 0.2); }
+.faq-tab:hover:not(.active) { background: rgba(249, 115, 22, 0.06); color: var(--orange-primary); }
 .faq-close {
     background: transparent;
     border: none;
     font-size: 20px;
     cursor: pointer;
-    color: var(--text-soft);
-    transition: transform 0.2s;
+    color: #64748b;
+    transition: all 0.3s ease;
+    padding: 4px 8px;
+    border-radius: 50%;
     margin-right: auto;
 }
-.faq-close:hover {
-    transform: rotate(90deg);
-    color: var(--orange-primary);
-}
-.faq-content {
-    padding: 15px;
-    max-height: 380px;
-    overflow-y: auto;
-}
-.faq-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+.faq-close:hover { transform: rotate(90deg); color: var(--orange-primary); background: rgba(249, 115, 22, 0.06); }
+.faq-content { padding: 15px; max-height: 400px; overflow-y: auto; }
+.faq-list { list-style: none; padding: 0; margin: 0; }
 .faq-list li {
-    padding: 10px;
-    border-bottom: 1px solid var(--orange-light);
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
     cursor: pointer;
-    transition: 0.2s;
+    transition: all 0.25s ease;
     font-size: 0.9rem;
+    border-radius: 12px;
+    font-weight: 500;
+    color: #c8c8d4;
 }
-.faq-list li:hover {
-    background: var(--orange-soft);
-    color: var(--orange-primary);
-    transform: translateX(-5px);
-}
+.faq-list li:hover { background: rgba(249, 115, 22, 0.06); color: var(--orange-primary); transform: translateX(-5px); }
 .faq-answer {
-    margin-top: 15px;
-    padding: 12px;
-    background: var(--orange-soft);
+    margin-top: 15px; padding: 16px;
+    background: rgba(249, 115, 22, 0.04);
     border-radius: 16px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     display: none;
+    border-right: 3px solid var(--orange-primary);
+    line-height: 1.7;
+    color: #c8c8d4;
 }
-.faq-answer.show {
-    display: block;
-}
+.faq-answer.show { display: block; }
 .support-init {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    display: flex; flex-direction: column; gap: 15px;
 }
 .support-init input {
-    padding: 12px;
-    border: 1px solid var(--orange-light);
-    border-radius: 28px;
-    font-size: 0.9rem;
-    background: var(--white-pure);
+    padding: 14px; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 28px; font-size: 0.9rem;
+    background: rgba(255,255,255,0.03); color: #e8e8e8;
+    transition: all 0.3s ease;
 }
+.support-init input:focus { outline: none; border-color: var(--orange-primary); box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.06); }
 .support-init button {
-    background: var(--gradient);
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 40px;
-    font-weight: 700;
-    cursor: pointer;
+    background: var(--gradient); color: white;
+    border: none; padding: 12px;
+    border-radius: 40px; font-weight: 700;
+    cursor: pointer; transition: all 0.3s ease;
 }
+.support-init button:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(249, 115, 22, 0.2); }
 .chat-container {
-    display: flex;
-    flex-direction: column;
-    height: 350px;
+    display: flex; flex-direction: column; height: 370px;
 }
 .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    background: #f9f9f9;
-    border-radius: 16px;
-    margin-bottom: 10px;
+    flex: 1; overflow-y: auto; padding: 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 16px; margin-bottom: 12px;
 }
-.message {
-    margin-bottom: 12px;
-    display: flex;
-    flex-direction: column;
-}
-.message.user {
-    align-items: flex-end;
-}
-.message.bot {
-    align-items: flex-start;
-}
+.message { margin-bottom: 12px; display: flex; flex-direction: column; }
+.message.user { align-items: flex-end; }
+.message.bot { align-items: flex-start; }
 .message-bubble {
-    max-width: 85%;
-    padding: 8px 12px;
-    border-radius: 18px;
-    font-size: 0.85rem;
+    max-width: 85%; padding: 10px 16px;
+    border-radius: 18px; font-size: 0.85rem;
     word-break: break-word;
 }
 .message.user .message-bubble {
-    background: var(--orange-primary);
-    color: white;
+    background: var(--gradient); color: white;
     border-bottom-right-radius: 4px;
 }
 .message.bot .message-bubble {
-    background: #e9ecef;
-    color: #1e293b;
+    background: rgba(255,255,255,0.05); color: #c8c8d4;
     border-bottom-left-radius: 4px;
 }
 .message-time {
-    font-size: 0.65rem;
-    color: #888;
-    margin-top: 4px;
-    margin-left: 8px;
-    margin-right: 8px;
+    font-size: 0.6rem; color: #64748b;
+    margin-top: 4px; margin-left: 8px; margin-right: 8px;
 }
 .chat-input-area {
-    display: flex;
-    gap: 8px;
+    display: flex; gap: 10px;
 }
 .chat-input-area input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid var(--orange-light);
-    border-radius: 40px;
-    font-size: 0.85rem;
+    flex: 1; padding: 12px 18px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 40px; font-size: 0.85rem;
+    background: rgba(255,255,255,0.03); color: #e8e8e8;
+    transition: all 0.3s ease;
 }
+.chat-input-area input:focus { outline: none; border-color: var(--orange-primary); box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.06); }
 .chat-input-area button {
+    background: var(--gradient); border: none;
+    padding: 10px 20px; border-radius: 40px;
+    color: white; font-weight: 700;
+    cursor: pointer; transition: all 0.3s ease;
+}
+.chat-input-area button:hover { transform: scale(1.05); box-shadow: 0 8px 25px rgba(249, 115, 22, 0.2); }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: var(--gradient); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--orange-dark); }
+
+/* ===== تم روشن ===== */
+body.light-mode {
+    background: #f5f0eb;
+    color: #1a1a1a;
+}
+body.light-mode .navbar {
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+body.light-mode .navbar.scrolled {
+    background: rgba(255, 255, 255, 0.98);
+}
+body.light-mode .mobile-menu {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(0,0,0,0.06);
+}
+body.light-mode .mobile-menu a {
+    color: #1a1a1a;
+}
+body.light-mode .mobile-menu a:hover {
+    background: var(--orange-soft);
+}
+body.light-mode .feature-card,
+body.light-mode .team-card,
+body.light-mode .cosmetic-card {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0,0,0,0.04);
+}
+body.light-mode .feature-card h3,
+body.light-mode .team-name,
+body.light-mode .cosmetic-name,
+body.light-mode .download-name {
+    color: #1a1a1a;
+}
+body.light-mode .feature-card p,
+body.light-mode .team-username,
+body.light-mode .stat-label,
+body.light-mode .footer-stat-label {
+    color: #64748b;
+}
+body.light-mode .section-title {
+    color: #1a1a1a;
+}
+body.light-mode .stats-section {
+    background: linear-gradient(135deg, var(--orange-soft) 0%, #fff5eb 100%);
+}
+body.light-mode .modal-content {
+    background: rgba(255, 255, 255, 0.98);
+}
+body.light-mode .download-option {
+    background: rgba(0,0,0,0.02);
+}
+body.light-mode .faq-panel {
+    background: rgba(255, 255, 255, 0.98);
+}
+body.light-mode .faq-list li {
+    color: #1a1a1a;
+}
+body.light-mode .faq-list li:hover {
+    background: var(--orange-soft);
+}
+body.light-mode .chat-messages {
+    background: #f5f0eb;
+}
+body.light-mode .message.bot .message-bubble {
+    background: #e9ecef;
+    color: #1a1a1a;
+}
+body.light-mode .theme-toggle {
+    color: #1a1a1a;
+}
+body.light-mode .menu-theme-toggle {
+    color: #1a1a1a;
+}
+body.light-mode .menu-divider {
+    background: rgba(0,0,0,0.06);
+}
+body.light-mode .cart-icon {
+    color: #1a1a1a;
+}
+body.light-mode .cosmetic-img {
+    background: rgba(0,0,0,0.02);
+}
+body.light-mode .online-badge {
+    background: rgba(34, 197, 94, 0.08);
+}
+body.light-mode .category-btn {
+    background: rgba(255,255,255,0.8);
+    border: 1px solid rgba(0,0,0,0.06);
+    color: #1a1a1a;
+}
+body.light-mode .category-btn:hover,
+body.light-mode .category-btn.active {
     background: var(--gradient);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 40px;
     color: white;
-    font-weight: bold;
-    cursor: pointer;
 }
-::-webkit-scrollbar {
-    width: 8px;
+body.light-mode .hero .description {
+    color: #475569;
 }
-::-webkit-scrollbar-track {
+body.light-mode .beta-tag {
     background: var(--orange-light);
-    border-radius: 10px;
 }
-::-webkit-scrollbar-thumb {
-    background: var(--gradient);
-    border-radius: 10px;
+body.light-mode .logo {
+    -webkit-text-fill-color: initial;
+    background: var(--gradient-glow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+body.light-mode .logo-icon {
+    color: var(--orange-primary);
+}
+body.light-mode .btn-outline {
+    color: var(--orange-primary);
+}
+body.light-mode .btn-outline:hover {
+    color: white;
+}
+body.light-mode .orbit-icon {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(249, 115, 22, 0.3);
+}
+body.light-mode .features-subtitle {
+    color: #64748b;
+}
+body.light-mode .features-glow {
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.2) 0%, rgba(249, 115, 22, 0.08) 40%, transparent 70%);
 }
 
-/* ===== واکنش‌گرا ===== */
+@media (max-width: 992px) {
+    .hero h1 { font-size: 4.5rem; }
+    .section-title { font-size: 2.5rem; }
+    .features-glow-container { height: 100px; }
+    .features-glow { width: 160px; height: 160px; }
+    .features-orbit { width: 140px; height: 140px; }
+    .orbit-icon { font-size: 1.4rem; width: 38px; height: 38px; }
+}
 @media (max-width: 768px) {
-    .hero h1 { font-size: 2.8rem; }
+    .hero h1 { font-size: 3rem; }
+    .hero .description { font-size: 1rem; }
     .navbar { padding: 0.5rem 4%; gap: 8px; }
     .logo { font-size: 1.5rem; }
-    .online-badge { font-size: 0.7rem; padding: 3px 8px; }
+    .online-badge { font-size: 0.7rem; padding: 4px 10px; }
     .online-number { font-size: 0.8rem; }
     .hamburger span { width: 24px; height: 2.5px; }
-    .mobile-menu { min-width: 160px; right: -10px; top: 45px; }
-    .section { padding: 50px 20px; }
-    .category-menu { gap: 8px; }
-    .category-btn { padding: 8px 18px; font-size: 0.85rem; }
+    .mobile-menu { min-width: 180px; right: -5px; top: 45px; }
+    .section { padding: 60px 20px; }
+    .section-title { font-size: 2rem; }
+    .category-menu { gap: 10px; }
+    .category-btn { padding: 8px 20px; font-size: 0.85rem; }
     .stats-grid { gap: 1.5rem; }
-    .stat-number { font-size: 2rem; }
-    .footer-stats { gap: 1.5rem; }
+    .stat-number { font-size: 2.8rem; }
+    .footer-stats { gap: 2rem; }
     .team-grid { gap: 1.5rem; }
     .features-grid { grid-template-columns: 1fr; }
-    .faq-panel { width: 300px; left: -10px; }
+    .faq-panel { width: 310px; left: -10px; }
+    .faq-widget { bottom: 15px; left: 15px; }
+    .faq-button { width: 50px; height: 50px; font-size: 24px; }
+    .download-options { grid-template-columns: 1fr; gap: 10px; }
+    .download-option { padding: 16px; }
+    .modal-content { margin: 20% auto; padding: 25px; }
+    .theme-toggle { width: 34px; height: 34px; font-size: 1rem; }
+    .features-glow-container { height: 80px; }
+    .features-glow { width: 120px; height: 120px; }
+    .features-orbit { width: 100px; height: 100px; }
+    .orbit-icon { font-size: 1.1rem; width: 30px; height: 30px; }
+    .features-subtitle { font-size: 0.9rem; }
+}
+@media (max-width: 480px) {
+    .hero h1 { font-size: 2.4rem; }
+    .online-badge { font-size: 0.6rem; padding: 3px 8px; }
+    .online-number { font-size: 0.7rem; }
+    .hamburger span { width: 20px; height: 2px; }
+    .mobile-menu { min-width: 160px; right: -10px; top: 40px; }
+    .mobile-menu a { padding: 10px 14px; font-size: 0.85rem; }
+    .btn { padding: 14px 30px; font-size: 0.9rem; }
+    .theme-toggle { width: 30px; height: 30px; font-size: 0.9rem; }
+    .features-glow-container { height: 70px; }
+    .features-glow { width: 100px; height: 100px; }
+    .features-orbit { width: 80px; height: 80px; }
+    .orbit-icon { font-size: 0.9rem; width: 26px; height: 26px; }
 }
 """
 # ===================== LOGIN_TEMPLATE =====================
@@ -2315,15 +2527,21 @@ LOGIN_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ورود / ثبت نام | MarsClient</title><style>{{ styles | safe }}</style></head>
 <body>
-<nav class="navbar">
+<nav class="navbar" id="navbar">
     <div class="nav-left">
-        <a href="/" class="logo animate-float">MarsClient</a>
+        <div class="logo-wrapper">
+            <a href="/" class="logo animate-float">MarsClient</a>
+            <span class="logo-icon">⚡</span>
+        </div>
     </div>
     <div class="nav-right">
         <div class="online-badge" id="onlineBadge">
             <span class="online-dot" id="onlineDot"></span>
             آنلاین: <span class="online-number" id="onlineCount">0</span> نفر
         </div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="تغییر تم">
+            <span id="themeIcon">🌙</span>
+        </button>
         <div class="hamburger-wrapper">
             <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="منو">
                 <span></span><span></span><span></span>
@@ -2333,6 +2551,10 @@ LOGIN_TEMPLATE = """<!DOCTYPE html>
                 <a href="/shop">🛒 فروشگاه</a>
                 <a href="/login">🔑 ورود / ثبت‌نام</a>
                 <a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+                <div class="menu-divider"></div>
+                <button class="menu-theme-toggle" onclick="toggleTheme(); closeMobileMenu();">
+                    <span id="menuThemeIcon">🌙</span> تغییر تم
+                </button>
             </div>
         </div>
     </div>
@@ -2340,67 +2562,63 @@ LOGIN_TEMPLATE = """<!DOCTYPE html>
 
 <div id="downloadModal" class="modal">
     <div class="modal-content download-modal">
-        <span class="close" onclick="closeDownloadModal()">&times;</span>
-        <div class="download-modal-icon">🚀</div>
-        <h2 style="color:var(--orange-primary); margin-bottom:5px;">MarsClient Download</h2>
+        <button class="close" onclick="closeDownloadModal()">&times;</button>
+        <div class="download-modal-icon animate-float">🚀</div>
+        <h2 style="color:#e8e8e8;">MarsClient Download</h2>
         <p style="color:var(--text-soft); margin-bottom:20px;">کلاینت ماینکرفت نسل بعدی</p>
-        
         <div class="download-options">
-            <div class="download-option">
+            <div class="download-option animate-float-slow">
                 <div class="download-icon">🪟</div>
                 <div class="download-name">ویندوز</div>
                 <div class="download-version">Windows 10/11</div>
                 <button class="download-btn" onclick="showComingSoon('ویندوز')">به زودی ⏳</button>
             </div>
-            
-            <div class="download-option">
+            <div class="download-option animate-float-slow delay-1">
                 <div class="download-icon">🐧</div>
                 <div class="download-name">لینوکس</div>
                 <div class="download-version">Ubuntu / Debian</div>
                 <button class="download-btn" onclick="showComingSoon('لینوکس')">به زودی ⏳</button>
             </div>
-            
-            <div class="download-option">
+            <div class="download-option animate-float-slow delay-2">
                 <div class="download-icon">🍎</div>
                 <div class="download-name">مک</div>
                 <div class="download-version">macOS</div>
                 <button class="download-btn" onclick="showComingSoon('مک')">به زودی ⏳</button>
             </div>
         </div>
-        
-        <p style="color:#8899aa; font-size:0.8rem; margin-top:15px;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
+        <p style="color:#64748b; font-size:0.8rem;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
     </div>
 </div>
 
 <div id="comingSoonModal" class="modal">
     <div class="modal-content" style="max-width:350px;">
-        <span class="close" onclick="closeComingSoon()">&times;</span>
+        <button class="close" onclick="closeComingSoon()">&times;</button>
         <div style="text-align:center; padding:10px;">
-            <div style="font-size:4rem; margin-bottom:10px;">🔧</div>
+            <div style="font-size:4rem; margin-bottom:10px; animation: float 2s ease-in-out infinite;">🔧</div>
             <h3 style="color:var(--orange-primary);">در حال ساخت!</h3>
-            <p id="comingSoonText" style="color:var(--text-soft); margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
+            <p id="comingSoonText" style="color:#94a3b8; margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
             <button onclick="closeComingSoon()" class="btn" style="padding:10px 30px;">متوجه شدم</button>
         </div>
     </div>
 </div>
 
 <section class="section" style="min-height:80vh; padding-top:120px;">
-<div style="max-width:500px; margin:0 auto; background:var(--white-pure); border-radius:32px; padding:35px; border:1px solid var(--orange-light); box-shadow:var(--shadow-md);">
-    <div style="display:flex; gap:20px; margin-bottom:30px; border-bottom:2px solid var(--orange-light);">
-        <button id="loginTabBtn" class="category-btn active" style="flex:1;">ورود</button>
-        <button id="registerTabBtn" class="category-btn" style="flex:1;">ثبت نام</button>
+<div style="max-width:500px; margin:0 auto; background:rgba(255,255,255,0.03); border-radius:32px; padding:40px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 20px 50px rgba(0,0,0,0.2); animation: fadeInScale 0.6s ease;">
+    <div style="display:flex; gap:20px; margin-bottom:30px; border-bottom:1px solid rgba(255,255,255,0.04);">
+        <button id="loginTabBtn" class="category-btn active" style="flex:1; border-radius:12px 12px 0 0;">ورود</button>
+        <button id="registerTabBtn" class="category-btn" style="flex:1; border-radius:12px 12px 0 0;">ثبت نام</button>
     </div>
     <div id="loginForm">
-        <div class="input-group"><label>نام کاربری</label><div class="input-wrapper"><i>👤</i><input type="text" id="loginUsername" placeholder="نام کاربری خود را وارد کنید"></div></div>
-        <div class="input-group"><label>رمز عبور</label><div class="input-wrapper"><i>🔒</i><input type="password" id="loginPassword" placeholder="رمز عبور"><button type="button" class="toggle-password" onclick="togglePassword('loginPassword')">👁️</button></div></div>
+        <div class="input-group"><label style="font-weight:600;color:#e8e8e8;">نام کاربری</label><input type="text" id="loginUsername" placeholder="نام کاربری خود را وارد کنید" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:#e8e8e8;margin-top:5px;"></div>
+        <div class="input-group" style="margin-top:15px;"><label style="font-weight:600;color:#e8e8e8;">رمز عبور</label><input type="password" id="loginPassword" placeholder="رمز عبور" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:#e8e8e8;margin-top:5px;"></div>
         <div id="loginError" style="color:var(--danger); margin:10px 0; font-size:0.85rem;"></div>
         <button id="doLoginBtn" class="btn" style="width:100%;">ورود</button>
     </div>
     <div id="registerForm" style="display:none;">
-        <div class="input-group"><label>ایمیل</label><div class="input-wrapper"><i>📧</i><input type="email" id="regEmail" placeholder="example@gmail.com"></div><div class="input-helper" id="emailHelper">ایمیل معتبر وارد کنید</div></div>
-        <div class="input-group"><label>نام کاربری</label><div class="input-wrapper"><i>👤</i><input type="text" id="regUsername" placeholder="حداقل 3 کاراکتر"></div><div class="input-helper" id="usernameHelper">فقط حروف انگلیسی، اعداد و زیرخط</div></div>
-        <div class="input-group"><label>رمز عبور</label><div class="input-wrapper"><i>🔒</i><input type="password" id="regPassword" placeholder="حداقل 6 کاراکتر"><button type="button" class="toggle-password" onclick="togglePassword('regPassword')">👁️</button></div><div class="password-strength"><div class="password-strength-bar" id="passwordStrengthBar"></div></div><div class="input-helper" id="passwordHelper">حداقل ۶ کاراکتر (حروف و اعداد)</div></div>
-        <div class="input-group"><label>تکرار رمز عبور</label><div class="input-wrapper"><i>🔒</i><input type="password" id="regConfirm" placeholder="رمز را دوباره وارد کنید"><button type="button" class="toggle-password" onclick="togglePassword('regConfirm')">👁️</button></div><div class="input-helper" id="confirmHelper">رمز عبور را تکرار کنید</div></div>
+        <div class="input-group"><label style="font-weight:600;color:#e8e8e8;">ایمیل</label><input type="email" id="regEmail" placeholder="example@gmail.com" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:#e8e8e8;margin-top:5px;"></div>
+        <div class="input-group" style="margin-top:15px;"><label style="font-weight:600;color:#e8e8e8;">نام کاربری</label><input type="text" id="regUsername" placeholder="حداقل 3 کاراکتر" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:#e8e8e8;margin-top:5px;"></div>
+        <div class="input-group" style="margin-top:15px;"><label style="font-weight:600;color:#e8e8e8;">رمز عبور</label><input type="password" id="regPassword" placeholder="حداقل 6 کاراکتر" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:#e8e8e8;margin-top:5px;"></div>
+        <div class="input-group" style="margin-top:15px;"><label style="font-weight:600;color:#e8e8e8;">تکرار رمز عبور</label><input type="password" id="regConfirm" placeholder="رمز را دوباره وارد کنید" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);color:#e8e8e8;margin-top:5px;"></div>
         <div id="regError" style="color:var(--danger); margin:10px 0; font-size:0.85rem;"></div>
         <button id="doRegisterBtn" class="btn" style="width:100%;">ثبت نام</button>
     </div>
@@ -2422,7 +2640,43 @@ LOGIN_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <script>
-// ===== منوی همبرگری =====
+function toggleTheme() {
+    const body = document.body;
+    const themeIcon = document.getElementById('themeIcon');
+    const menuThemeIcon = document.getElementById('menuThemeIcon');
+    body.classList.toggle('light-mode');
+    if (body.classList.contains('light-mode')) {
+        themeIcon.textContent = '☀️';
+        menuThemeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+    } else {
+        themeIcon.textContent = '🌙';
+        menuThemeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    menu.classList.remove('active');
+    btn.classList.remove('active');
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('themeIcon').textContent = '☀️';
+        document.getElementById('menuThemeIcon').textContent = '☀️';
+    }
+});
+
+window.addEventListener('scroll', function() {
+    const navbar = document.getElementById('navbar');
+    if (window.scrollY > 50) { navbar.classList.add('scrolled'); }
+    else { navbar.classList.remove('scrolled'); }
+});
+
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
     const btn = document.getElementById('hamburgerBtn');
@@ -2438,139 +2692,54 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// ===== مودال دانلود =====
-function showDownloadModal() { 
-    document.getElementById('downloadModal').style.display='block'; 
-}
-
-function closeDownloadModal() { 
-    document.getElementById('downloadModal').style.display='none'; 
-}
-
-// ===== مودال "به زودی" =====
+function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
+function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
 function showComingSoon(os) {
     const modal = document.getElementById('comingSoonModal');
     const text = document.getElementById('comingSoonText');
-    const osNames = {
-        'ویندوز': 'ویندوز (Windows 10/11)',
-        'لینوکس': 'لینوکس (Ubuntu / Debian)',
-        'مک': 'مک (macOS)'
-    };
+    const osNames = {'ویندوز':'ویندوز (Windows 10/11)','لینوکس':'لینوکس (Ubuntu / Debian)','مک':'مک (macOS)'};
     text.textContent = `نسخه ${osNames[os] || os} به زودی منتشر می‌شود`;
     modal.style.display = 'block';
 }
-
-function closeComingSoon() {
-    document.getElementById('comingSoonModal').style.display='none';
-}
-
-// بستن مودال با کلیک خارج از آن
+function closeComingSoon() { document.getElementById('comingSoonModal').style.display='none'; }
 window.onclick = function(event) {
-    const modal1 = document.getElementById('downloadModal');
-    const modal2 = document.getElementById('comingSoonModal');
-    if (event.target == modal1) modal1.style.display = 'none';
-    if (event.target == modal2) modal2.style.display = 'none';
+    if (event.target == document.getElementById('downloadModal')) document.getElementById('downloadModal').style.display='none';
+    if (event.target == document.getElementById('comingSoonModal')) document.getElementById('comingSoonModal').style.display='none';
 }
 
-// ===== آنلاین =====
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
 let onlineCount = 0;
-
 function sendHeartbeat() { 
     fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) })
-    .then(r=>r.json())
-    .then(data=>{ 
+    .then(r=>r.json()).then(data=>{ 
         if(data.online_count !== undefined) {
             const oldCount = onlineCount;
             onlineCount = data.online_count;
             document.getElementById('onlineCount').innerText = onlineCount;
-            if(onlineCount < oldCount || onlineCount === 0) {
-                flashOffline();
-            }
+            if(onlineCount < oldCount || onlineCount === 0) { flashOffline(); }
         }
-    })
-    .catch(e=>console.warn); 
+    }).catch(e=>console.warn); 
 }
-
 function flashOffline() {
     const badge = document.getElementById('onlineBadge');
     const dot = document.getElementById('onlineDot');
     badge.classList.add('offline-flash');
     dot.classList.add('offline');
-    setTimeout(() => {
-        badge.classList.remove('offline-flash');
-        dot.classList.remove('offline');
-    }, 1200);
+    setTimeout(() => { badge.classList.remove('offline-flash'); dot.classList.remove('offline'); }, 1200);
 }
-
-function sendLeave() { 
-    navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId}));
-    flashOffline();
-}
-
+function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); flashOffline(); }
 window.addEventListener('beforeunload', sendLeave);
 sendHeartbeat(); 
 setInterval(sendHeartbeat, 20000);
-
 window.addEventListener('load', function() {
     const badge = document.getElementById('onlineBadge');
     badge.style.animation = 'onlineFlash 0.8s ease';
-    setTimeout(() => {
-        badge.style.animation = '';
-    }, 1000);
+    setTimeout(() => { badge.style.animation = ''; }, 1000);
 });
 
-function togglePassword(id) { const input = document.getElementById(id); input.type = input.type === 'password' ? 'text' : 'password'; }
 function validateEmail(email) { return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email); }
 function validateUsername(username) { return username.length >= 3 && /^[a-zA-Z0-9_]+$/.test(username); }
-function checkPasswordStrength(password) {
-    let strength = 0;
-    if (password.length >= 6) strength++;
-    if (password.length >= 8) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (strength <= 1) return 'weak';
-    if (strength <= 3) return 'medium';
-    return 'strong';
-}
-function updateRegisterFormValidity() {
-    const email = document.getElementById('regEmail').value;
-    const username = document.getElementById('regUsername').value;
-    const password = document.getElementById('regPassword').value;
-    const confirm = document.getElementById('regConfirm').value;
-    let isValid = true;
-    const emailValid = validateEmail(email);
-    const emailHelper = document.getElementById('emailHelper');
-    if (!email) { emailHelper.textContent = 'ایمیل الزامی است'; emailHelper.classList.add('error'); isValid = false; }
-    else if (!emailValid) { emailHelper.textContent = 'ایمیل نامعتبر است'; emailHelper.classList.add('error'); isValid = false; }
-    else { emailHelper.textContent = '✅ ایمیل معتبر'; emailHelper.classList.remove('error'); emailHelper.classList.add('success'); }
-    const usernameValid = validateUsername(username);
-    const usernameHelper = document.getElementById('usernameHelper');
-    if (!username) { usernameHelper.textContent = 'نام کاربری الزامی است'; usernameHelper.classList.add('error'); isValid = false; }
-    else if (!usernameValid) { usernameHelper.textContent = 'حداقل ۳ کاراکتر (حروف/اعداد/زیرخط)'; usernameHelper.classList.add('error'); isValid = false; }
-    else { usernameHelper.textContent = '✅ نام کاربری مناسب'; usernameHelper.classList.remove('error'); usernameHelper.classList.add('success'); }
-    const strength = checkPasswordStrength(password);
-    const bar = document.getElementById('passwordStrengthBar');
-    bar.className = 'password-strength-bar';
-    if (password.length === 0) bar.style.width = '0%';
-    else if (strength === 'weak') { bar.classList.add('strength-weak'); bar.style.width = '33%'; }
-    else if (strength === 'medium') { bar.classList.add('strength-medium'); bar.style.width = '66%'; }
-    else { bar.classList.add('strength-strong'); bar.style.width = '100%'; }
-    const passwordHelper = document.getElementById('passwordHelper');
-    if (password.length > 0 && password.length < 6) { passwordHelper.textContent = 'رمز حداقل ۶ کاراکتر'; passwordHelper.classList.add('error'); isValid = false; }
-    else if (password.length >= 6) { passwordHelper.textContent = '✅ رمز قابل قبول'; passwordHelper.classList.remove('error'); passwordHelper.classList.add('success'); }
-    else { passwordHelper.textContent = 'حداقل ۶ کاراکتر (حروف و اعداد)'; passwordHelper.classList.remove('error','success'); }
-    const confirmHelper = document.getElementById('confirmHelper');
-    if (confirm.length > 0 && password !== confirm) { confirmHelper.textContent = 'رمزها مطابقت ندارند'; confirmHelper.classList.add('error'); isValid = false; }
-    else if (confirm.length > 0 && password === confirm) { confirmHelper.textContent = '✅ رمزها مطابقت دارند'; confirmHelper.classList.remove('error'); confirmHelper.classList.add('success'); }
-    else { confirmHelper.textContent = 'رمز عبور را تکرار کنید'; confirmHelper.classList.remove('error','success'); }
-    return isValid;
-}
-document.getElementById('regEmail').addEventListener('input', updateRegisterFormValidity);
-document.getElementById('regUsername').addEventListener('input', updateRegisterFormValidity);
-document.getElementById('regPassword').addEventListener('input', updateRegisterFormValidity);
-document.getElementById('regConfirm').addEventListener('input', updateRegisterFormValidity);
 
 document.getElementById('doLoginBtn').addEventListener('click', async ()=>{
     const username = document.getElementById('loginUsername').value.trim();
@@ -2586,30 +2755,25 @@ document.getElementById('doRegisterBtn').addEventListener('click', async ()=>{
     const password = document.getElementById('regPassword').value;
     const confirm = document.getElementById('regConfirm').value;
     if(!validateEmail(email)) { document.getElementById('regError').innerText = 'ایمیل نامعتبر است'; return; }
-    if(!validateUsername(username)) { document.getElementById('regError').innerText = 'نام کاربری باید حداقل ۳ کاراکتر و فقط شامل حروف، اعداد و زیرخط باشد'; return; }
+    if(!validateUsername(username)) { document.getElementById('regError').innerText = 'نام کاربری باید حداقل ۳ کاراکتر باشد'; return; }
     if(password.length < 6) { document.getElementById('regError').innerText = 'رمز عبور باید حداقل ۶ کاراکتر باشد'; return; }
-    if(password !== confirm) { document.getElementById('regError').innerText = 'رمز عبور و تکرار آن مطابقت ندارند'; return; }
+    if(password !== confirm) { document.getElementById('regError').innerText = 'رمز عبور مطابقت ندارند'; return; }
     const res = await fetch('/api/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,username,password,confirm_password:confirm})});
     const data = await res.json();
     if(data.success) window.location.href='/';
     else document.getElementById('regError').innerText = data.message;
 });
 document.getElementById('loginTabBtn').onclick = () => { document.getElementById('loginForm').style.display='block'; document.getElementById('registerForm').style.display='none'; document.getElementById('loginTabBtn').classList.add('active'); document.getElementById('registerTabBtn').classList.remove('active'); };
-document.getElementById('registerTabBtn').onclick = () => { document.getElementById('loginForm').style.display='none'; document.getElementById('registerForm').style.display='block'; document.getElementById('registerTabBtn').classList.add('active'); document.getElementById('loginTabBtn').classList.remove('active'); updateRegisterFormValidity(); };
+document.getElementById('registerTabBtn').onclick = () => { document.getElementById('loginForm').style.display='none'; document.getElementById('registerForm').style.display='block'; document.getElementById('registerTabBtn').classList.add('active'); document.getElementById('loginTabBtn').classList.remove('active'); };
 
 const faqData = [
-    { q: "چگونه MarsClient را نصب کنم؟", a: "فایل نصاب را از دکمه دانلود دریافت کرده و اجرا کنید. مسیر نصب ماینکرفت را انتخاب کنید و پس از اتمام، لانچر را اجرا کنید." },
-    { q: "آیا با همه نسخه‌های ماینکرفت سازگار است؟", a: "بله! MarsClient از نسخه ۱.۷ تا آخرین نسخه ماینکرفت را پشتیبانی می‌کند." },
-    { q: "لانچر اختصاصی MarsClient چه قابلیت‌هایی دارد؟", a: "مدیریت مادها، دانلود خودکار نسخه‌ها، پشتیبانی از چند پروفایل، آپدیت خودکار و رابط کاربری زیبا." },
-    { q: "چگونه FPS را افزایش دهم؟", a: "در تنظیمات گرافیکی کلاینت، گزینه‌های Performance Mode و Smooth FPS را فعال کنید." },
-    { q: "آیا کلاینت رایگان است؟", a: "بله، کلاینت اصلی رایگان است. کازمتیک‌های فروشگاه دارای هزینه نمادین هستند." },
-    { q: "چگونه ماد اضافه کنم؟", a: "از طریق لانچر اختصاصی MarsClient می‌توانید مادها را به راحتی مدیریت و نصب کنید." },
-    { q: "گزارش باگ؟", a: "از طریق تیکت پشتیبانی در وبسایت یا دیسکورد." }
+    { q: "چگونه MarsClient را نصب کنم؟", a: "فایل نصاب را از دکمه دانلود دریافت کرده و اجرا کنید." },
+    { q: "آیا با همه نسخه‌های ماینکرفت سازگار است؟", a: "بله! از نسخه ۱.۷ تا آخرین نسخه را پشتیبانی می‌کند." },
+    { q: "لانچر اختصاصی MarsClient چه قابلیت‌هایی دارد؟", a: "مدیریت مادها، دانلود خودکار نسخه‌ها." },
+    { q: "چگونه FPS را افزایش دهم؟", a: "Performance Mode را در تنظیمات فعال کنید." }
 ];
 let currentTab = 'faq';
-let supportUserName = '';
-let supportUserPhone = '';
-let chatHistory = [];
+let supportUserName = '', supportUserPhone = '', chatHistory = [];
 
 function renderFaqContent() {
     const container = document.getElementById('faqContent');
@@ -2621,21 +2785,17 @@ function renderFaqContent() {
     } else {
         if (!supportUserName || !supportUserPhone) {
             container.innerHTML = `<div class="support-init"><input type="text" id="supportName" placeholder="نام و نام خانوادگی"><input type="tel" id="supportPhone" placeholder="شماره تماس"><button onclick="startSupportChat()">شروع گفتگو</button></div>`;
-        } else {
-            renderChat();
-        }
+        } else { renderChat(); }
     }
 }
-
 function startSupportChat() {
     const name = document.getElementById('supportName')?.value.trim();
     const phone = document.getElementById('supportPhone')?.value.trim();
     if (!name || !phone) { alert('لطفاً نام و شماره تماس را وارد کنید'); return; }
     supportUserName = name; supportUserPhone = phone; chatHistory = [];
-    setTimeout(() => { addBotMessage("سلام! به پشتیبانی MarsClient خوش آمدید. لطفاً مشکل خود را مطرح کنید."); renderChat(); }, 500);
+    setTimeout(() => { addBotMessage("سلام! به پشتیبانی MarsClient خوش آمدید."); renderChat(); }, 500);
     renderFaqContent();
 }
-
 function renderChat() {
     const container = document.getElementById('faqContent');
     let messagesHtml = '<div class="chat-container"><div class="chat-messages" id="chatMessages">';
@@ -2645,27 +2805,23 @@ function renderChat() {
     const msgDiv = document.getElementById('chatMessages'); if (msgDiv) msgDiv.scrollTop = msgDiv.scrollHeight;
     const input = document.getElementById('chatInput'); if (input) input.focus();
 }
-
 function addUserMessage(text) { chatHistory.push({ sender: 'user', text: text, timestamp: Date.now() }); renderChat(); }
 function addBotMessage(text) { chatHistory.push({ sender: 'bot', text: text, timestamp: Date.now() }); renderChat(); }
-
 function sendMessage() {
     const input = document.getElementById('chatInput'); const message = input.value.trim();
     if (!message) return;
     addUserMessage(message); input.value = '';
     const lowerMsg = message.toLowerCase();
     let reply = "";
-    if (lowerMsg.includes('نصب') || lowerMsg.includes('install')) { reply = "برای نصب MarsClient، فایل نصاب را از دکمه دانلود دریافت کنید. پس از اجرا، مسیر ماینکرفت را انتخاب کنید."; }
-    else if (lowerMsg.includes('خرید') || lowerMsg.includes('price') || lowerMsg.includes('قیمت')) { reply = "برای خرید آیتم‌های فروشگاه، ابتدا وارد حساب شوید، سپس محصول را به سبد خرید اضافه کرده و پرداخت را انجام دهید."; }
-    else if (lowerMsg.includes('fps') || lowerMsg.includes('کاهش') || lowerMsg.includes('lag')) { reply = "برای افزایش FPS، در تنظیمات گرافیکی Performance Mode را فعال کنید و از مادهای اضافی کم استفاده کنید."; }
-    else if (lowerMsg.includes('مشکل') || lowerMsg.includes('error') || lowerMsg.includes('خطا')) { reply = "مشکل خود را دقیق‌تر توضیح دهید تا بتوانیم راهنمایی بهتری ارائه دهیم. در صورت نیاز، با شماره ۰۹۱۲۳۴۵۶۷۸۹ تماس بگیرید."; }
-    else if (lowerMsg.includes('تشکر') || lowerMsg.includes('ممنون')) { reply = "خواهش می‌کنم! خوشحالیم که می‌توانیم کمک کنیم."; }
-    else { reply = "درخواست شما ثبت شد. همکاران ما به زودی پاسخ می‌دهند. (پاسخ خودکار: لطفاً موضوع را دقیق‌تر بگویید)"; }
-    setTimeout(() => addBotMessage(reply), 800);
+    if (lowerMsg.includes('نصب')) { reply = "فایل نصاب را از دکمه دانلود دریافت کنید."; }
+    else if (lowerMsg.includes('خرید')) { reply = "وارد حساب شوید و به فروشگاه بروید."; }
+    else if (lowerMsg.includes('fps')) { reply = "Performance Mode را در تنظیمات فعال کنید."; }
+    else if (lowerMsg.includes('تشکر')) { reply = "خواهش می‌کنم!"; }
+    else { reply = "درخواست شما ثبت شد."; }
+    setTimeout(() => addBotMessage(reply), 600);
 }
-
-function showAnswer(el, answer) { const answerDiv = document.getElementById('faqAnswer'); if (!answerDiv) return; answerDiv.innerHTML = answer; answerDiv.classList.add('show'); answerDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.classList.toggle('active'); if (panel.classList.contains('active')) { renderFaqContent(); const faqTabBtn = document.getElementById('faqTabBtn'); const supportTabBtn = document.getElementById('supportTabBtn'); faqTabBtn.onclick = () => { currentTab = 'faq'; renderFaqContent(); faqTabBtn.classList.add('active'); supportTabBtn.classList.remove('active'); }; supportTabBtn.onclick = () => { currentTab = 'support'; renderFaqContent(); supportTabBtn.classList.add('active'); faqTabBtn.classList.remove('active'); }; if (currentTab === 'support' && supportUserName && supportUserPhone) { renderChat(); } } }
+function showAnswer(el, answer) { const answerDiv = document.getElementById('faqAnswer'); if (!answerDiv) return; answerDiv.innerHTML = answer; answerDiv.classList.add('show'); }
+function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.classList.toggle('active'); if (panel.classList.contains('active')) { renderFaqContent(); const faqTabBtn = document.getElementById('faqTabBtn'); const supportTabBtn = document.getElementById('supportTabBtn'); faqTabBtn.onclick = () => { currentTab = 'faq'; renderFaqContent(); faqTabBtn.classList.add('active'); supportTabBtn.classList.remove('active'); }; supportTabBtn.onclick = () => { currentTab = 'support'; renderFaqContent(); supportTabBtn.classList.add('active'); faqTabBtn.classList.remove('active'); }; } }
 </script>
 </body>
 </html>"""
@@ -2675,15 +2831,21 @@ HOME_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MarsClient | صفحه اصلی</title><style>{{ styles | safe }}</style></head>
 <body>
-<nav class="navbar">
+<nav class="navbar" id="navbar">
     <div class="nav-left">
-        <a href="/" class="logo animate-float">MarsClient</a>
+        <div class="logo-wrapper">
+            <a href="/" class="logo animate-float">MarsClient</a>
+            <span class="logo-icon">⚡</span>
+        </div>
     </div>
     <div class="nav-right">
         <div class="online-badge" id="onlineBadge">
             <span class="online-dot" id="onlineDot"></span>
             آنلاین: <span class="online-number" id="onlineCount">0</span> نفر
         </div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="تغییر تم">
+            <span id="themeIcon">🌙</span>
+        </button>
         <div class="hamburger-wrapper">
             <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="منو">
                 <span></span><span></span><span></span>
@@ -2693,54 +2855,54 @@ HOME_TEMPLATE = """<!DOCTYPE html>
                 <a href="/shop">🛒 فروشگاه</a>
                 <a href="/login">🔑 ورود / ثبت‌نام</a>
                 <a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+                <div class="menu-divider"></div>
+                <button class="menu-theme-toggle" onclick="toggleTheme(); closeMobileMenu();">
+                    <span id="menuThemeIcon">🌙</span> تغییر تم
+                </button>
             </div>
         </div>
         <a href="/cart" class="cart-icon" id="cartLink" style="display: none;">🛒 <span id="cartCount">0</span></a>
-        <div id="authSection" style="display: flex; gap: 12px;"></div>
+        <div id="authSection" style="display: flex; gap: 8px;"></div>
     </div>
 </nav>
 
 <div id="downloadModal" class="modal">
     <div class="modal-content download-modal">
-        <span class="close" onclick="closeDownloadModal()">&times;</span>
-        <div class="download-modal-icon">🚀</div>
-        <h2 style="color:var(--orange-primary); margin-bottom:5px;">MarsClient Download</h2>
+        <button class="close" onclick="closeDownloadModal()">&times;</button>
+        <div class="download-modal-icon animate-float">🚀</div>
+        <h2 style="color:#e8e8e8;">MarsClient Download</h2>
         <p style="color:var(--text-soft); margin-bottom:20px;">کلاینت ماینکرفت نسل بعدی</p>
-        
         <div class="download-options">
-            <div class="download-option">
+            <div class="download-option animate-float-slow">
                 <div class="download-icon">🪟</div>
                 <div class="download-name">ویندوز</div>
                 <div class="download-version">Windows 10/11</div>
                 <button class="download-btn" onclick="showComingSoon('ویندوز')">به زودی ⏳</button>
             </div>
-            
-            <div class="download-option">
+            <div class="download-option animate-float-slow delay-1">
                 <div class="download-icon">🐧</div>
                 <div class="download-name">لینوکس</div>
                 <div class="download-version">Ubuntu / Debian</div>
                 <button class="download-btn" onclick="showComingSoon('لینوکس')">به زودی ⏳</button>
             </div>
-            
-            <div class="download-option">
+            <div class="download-option animate-float-slow delay-2">
                 <div class="download-icon">🍎</div>
                 <div class="download-name">مک</div>
                 <div class="download-version">macOS</div>
                 <button class="download-btn" onclick="showComingSoon('مک')">به زودی ⏳</button>
             </div>
         </div>
-        
-        <p style="color:#8899aa; font-size:0.8rem; margin-top:15px;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
+        <p style="color:#64748b; font-size:0.8rem;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
     </div>
 </div>
 
 <div id="comingSoonModal" class="modal">
     <div class="modal-content" style="max-width:350px;">
-        <span class="close" onclick="closeComingSoon()">&times;</span>
+        <button class="close" onclick="closeComingSoon()">&times;</button>
         <div style="text-align:center; padding:10px;">
-            <div style="font-size:4rem; margin-bottom:10px;">🔧</div>
+            <div style="font-size:4rem; margin-bottom:10px; animation: float 2s ease-in-out infinite;">🔧</div>
             <h3 style="color:var(--orange-primary);">در حال ساخت!</h3>
-            <p id="comingSoonText" style="color:var(--text-soft); margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
+            <p id="comingSoonText" style="color:#94a3b8; margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
             <button onclick="closeComingSoon()" class="btn" style="padding:10px 30px;">متوجه شدم</button>
         </div>
     </div>
@@ -2749,7 +2911,10 @@ HOME_TEMPLATE = """<!DOCTYPE html>
 <section class="hero">
     <div class="beta-tag animate-fade-up">🔸 نسخه بتا v1.0 منتشر شد 🔸</div>
     <h1 class="animate-fade-up delay-1">MarsClient</h1>
-    <div class="description animate-fade-up delay-2">موتور نسل بعدی ماینکرفت · مهندسی‌شده برای عملکرد فوق‌العاده، تأخیر حداقلی و گیم‌پلی بدون لگ</div>
+    <div class="description animate-fade-up delay-2">
+        موتور نسل بعدی ماینکرفت · مهندسی‌شده برای عملکرد فوق‌العاده، 
+        <span>تأخیر حداقلی</span> و گیم‌پلی بدون لگ
+    </div>
     <div class="animate-fade-up delay-3" style="display:flex;gap:20px; flex-wrap:wrap; justify-content:center;">
         <button class="btn" onclick="showDownloadModal()">📥 دریافت MarsClient</button>
         <a href="/shop" class="btn btn-outline">🛒 فروشگاه</a>
@@ -2757,21 +2922,59 @@ HOME_TEMPLATE = """<!DOCTYPE html>
 </section>
 
 <section class="section" id="features">
-    <h2 class="section-title scroll-animate"><span>چرا MarsClient</span> ؟</h2>
+    <div class="features-header">
+        <div class="features-glow-container">
+            <div class="features-glow"></div>
+            <div class="features-orbit">
+                <span class="orbit-icon icon-1">⚡</span>
+                <span class="orbit-icon icon-2">🧩</span>
+                <span class="orbit-icon icon-3">🎨</span>
+                <span class="orbit-icon icon-4">🚀</span>
+                <span class="orbit-icon icon-5">🛡️</span>
+                <span class="orbit-icon icon-6">🎮</span>
+            </div>
+        </div>
+        <h2 class="section-title scroll-animate"><span>چرا MarsClient</span> ؟</h2>
+        <p class="features-subtitle">نسل بعدی تجربه ماینکرفت با قدرت و زیبایی بی‌نظیر</p>
+    </div>
     <div class="features-grid">
-        <div class="feature-card scroll-animate"><div class="feature-icon animate-float">⚡</div><h3>عملکرد افراطی</h3><p>رندرینگ بهینه و شبکه فوق سریع برای حداکثر FPS، کاهش تأخیر و گیم‌پلی نرم‌تر حتی روی سیستم‌های ضعیف.</p></div>
-        <div class="feature-card scroll-animate"><div class="feature-icon animate-float-reverse">🧩</div><h3>ماژول‌های پیشرفته</h3><p>بیش از ۳۵ ماژول داخلی شامل نمایش کی‌استروک، ToggleSprint و ویرایشگر HUD شخصی‌سازی‌شده.</p></div>
-        <div class="feature-card scroll-animate"><div class="feature-icon animate-float">🎨</div><h3>تم نارنجی زنده</h3><p>طراحی مینیمال اما پر انرژی با رنگ‌های نارنجی و سفید، تجربه بصری لذت‌بخش و حرفه‌ای.</p></div>
-        <div class="feature-card scroll-animate"><div class="feature-icon animate-float-reverse">🛡️</div><h3>بهینه‌سازی JVM</h3><p>تنظیمات سفارشی ماشین مجاز جاوا، مدیریت حافظه هوشمند و لانچر قدرتمند برای رقابت‌پذیری بالا.</p></div>
-        <div class="feature-card scroll-animate"><div class="feature-icon animate-float">🚀</div><h3>لانچر اختصاصی MarsClient</h3><p>لانچر قدرتمند با مدیریت آسان مادها، نسخه‌ها و پروفایل‌های مختلف. رابط کاربری زیبا و سریع با قابلیت آپدیت خودکار.</p></div>
-        <div class="feature-card scroll-animate"><div class="feature-icon animate-float-reverse">🎮</div><h3>پشتیبانی از همه نسخه‌ها</h3><p>از نسخه ۱.۷ تا آخرین نسخه ماینکرفت! کاملاً سازگار با لانچرهای معروف و قابلیت اجرای همزمان چند نسخه.</p></div>
+        <div class="feature-card scroll-animate">
+            <div class="feature-icon animate-float">⚡</div>
+            <h3>عملکرد افراطی</h3>
+            <p>رندرینگ بهینه و شبکه فوق سریع برای حداکثر FPS، کاهش تأخیر و گیم‌پلی نرم‌تر حتی روی سیستم‌های ضعیف.</p>
+        </div>
+        <div class="feature-card scroll-animate">
+            <div class="feature-icon animate-float-reverse">🧩</div>
+            <h3>ماژول‌های پیشرفته</h3>
+            <p>بیش از ۳۵ ماژول داخلی شامل نمایش کی‌استروک، ToggleSprint و ویرایشگر HUD شخصی‌سازی‌شده.</p>
+        </div>
+        <div class="feature-card scroll-animate">
+            <div class="feature-icon animate-float">🎨</div>
+            <h3>تم نارنجی زنده</h3>
+            <p>طراحی مینیمال اما پر انرژی با رنگ‌های نارنجی و سفید، تجربه بصری لذت‌بخش و حرفه‌ای.</p>
+        </div>
+        <div class="feature-card scroll-animate">
+            <div class="feature-icon animate-float-reverse">🛡️</div>
+            <h3>بهینه‌سازی JVM</h3>
+            <p>تنظیمات سفارشی ماشین مجاز جاوا، مدیریت حافظه هوشمند و لانچر قدرتمند برای رقابت‌پذیری بالا.</p>
+        </div>
+        <div class="feature-card scroll-animate">
+            <div class="feature-icon animate-float">🚀</div>
+            <h3>لانچر اختصاصی MarsClient</h3>
+            <p>لانچر قدرتمند با مدیریت آسان مادها، نسخه‌ها و پروفایل‌های مختلف. رابط کاربری زیبا و سریع با قابلیت آپدیت خودکار.</p>
+        </div>
+        <div class="feature-card scroll-animate">
+            <div class="feature-icon animate-float-reverse">🎮</div>
+            <h3>پشتیبانی از همه نسخه‌ها</h3>
+            <p>از نسخه ۱.۷ تا آخرین نسخه ماینکرفت! کاملاً سازگار با لانچرهای معروف و قابلیت اجرای همزمان چند نسخه.</p>
+        </div>
     </div>
 </section>
 
 <section class="section" id="developers">
     <h2 class="section-title scroll-animate"><span>تیم توسعه‌دهندگان</span> MarsClient</h2>
     <div class="team-grid" id="teamGrid">
-        <div style="text-align:center;width:100%;">در حال بارگذاری اطلاعات تیم...</div>
+        <div style="text-align:center;width:100%;" class="animate-fade-scale">در حال بارگذاری اطلاعات تیم...</div>
     </div>
 </section>
 
@@ -2795,7 +2998,7 @@ HOME_TEMPLATE = """<!DOCTYPE html>
 <footer>
     <div class="footer-content">
         <div class="footer-stats">
-            <div class="footer-stat"><div class="footer-stat-value">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
+            <div class="footer-stat"><div class="footer-stat-value animate-glow">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
             <div class="footer-stat"><div class="footer-stat-value">۴۰+</div><div class="footer-stat-label">ماژول داخلی</div></div>
         </div>
         <div class="footer-copyright">© ۲۰۲۶ MarsClient — نسل بعدی موتور ماینکرفت</div>
@@ -2815,7 +3018,43 @@ HOME_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <script>
-// ===== منوی همبرگری =====
+function toggleTheme() {
+    const body = document.body;
+    const themeIcon = document.getElementById('themeIcon');
+    const menuThemeIcon = document.getElementById('menuThemeIcon');
+    body.classList.toggle('light-mode');
+    if (body.classList.contains('light-mode')) {
+        themeIcon.textContent = '☀️';
+        menuThemeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+    } else {
+        themeIcon.textContent = '🌙';
+        menuThemeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    menu.classList.remove('active');
+    btn.classList.remove('active');
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('themeIcon').textContent = '☀️';
+        document.getElementById('menuThemeIcon').textContent = '☀️';
+    }
+});
+
+window.addEventListener('scroll', function() {
+    const navbar = document.getElementById('navbar');
+    if (window.scrollY > 50) { navbar.classList.add('scrolled'); }
+    else { navbar.classList.remove('scrolled'); }
+});
+
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
     const btn = document.getElementById('hamburgerBtn');
@@ -2831,93 +3070,62 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// ===== مودال دانلود =====
-function showDownloadModal() { 
-    document.getElementById('downloadModal').style.display='block'; 
-}
-
-function closeDownloadModal() { 
-    document.getElementById('downloadModal').style.display='none'; 
-}
-
-// ===== مودال "به زودی" =====
+function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
+function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
 function showComingSoon(os) {
     const modal = document.getElementById('comingSoonModal');
     const text = document.getElementById('comingSoonText');
-    const osNames = {
-        'ویندوز': 'ویندوز (Windows 10/11)',
-        'لینوکس': 'لینوکس (Ubuntu / Debian)',
-        'مک': 'مک (macOS)'
-    };
+    const osNames = {'ویندوز':'ویندوز (Windows 10/11)','لینوکس':'لینوکس (Ubuntu / Debian)','مک':'مک (macOS)'};
     text.textContent = `نسخه ${osNames[os] || os} به زودی منتشر می‌شود`;
     modal.style.display = 'block';
 }
-
-function closeComingSoon() {
-    document.getElementById('comingSoonModal').style.display='none';
-}
-
-// بستن مودال با کلیک خارج از آن
+function closeComingSoon() { document.getElementById('comingSoonModal').style.display='none'; }
 window.onclick = function(event) {
-    const modal1 = document.getElementById('downloadModal');
-    const modal2 = document.getElementById('comingSoonModal');
-    if (event.target == modal1) modal1.style.display = 'none';
-    if (event.target == modal2) modal2.style.display = 'none';
+    if (event.target == document.getElementById('downloadModal')) document.getElementById('downloadModal').style.display='none';
+    if (event.target == document.getElementById('comingSoonModal')) document.getElementById('comingSoonModal').style.display='none';
 }
 
-// ===== آنلاین =====
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
 let onlineCount = 0;
-
 function sendHeartbeat() { 
     fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) })
-    .then(r=>r.json())
-    .then(data=>{ 
+    .then(r=>r.json()).then(data=>{ 
         if(data.online_count !== undefined) {
             const oldCount = onlineCount;
             onlineCount = data.online_count;
             document.getElementById('onlineCount').innerText = onlineCount;
-            if(onlineCount < oldCount || onlineCount === 0) {
-                flashOffline();
-            }
+            if(onlineCount < oldCount || onlineCount === 0) { flashOffline(); }
         }
-    })
-    .catch(e=>console.warn); 
+    }).catch(e=>console.warn); 
 }
-
 function flashOffline() {
     const badge = document.getElementById('onlineBadge');
     const dot = document.getElementById('onlineDot');
     badge.classList.add('offline-flash');
     dot.classList.add('offline');
-    setTimeout(() => {
-        badge.classList.remove('offline-flash');
-        dot.classList.remove('offline');
-    }, 1200);
+    setTimeout(() => { badge.classList.remove('offline-flash'); dot.classList.remove('offline'); }, 1200);
 }
-
-function sendLeave() { 
-    navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId}));
-    flashOffline();
-}
-
+function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); flashOffline(); }
 window.addEventListener('beforeunload', sendLeave);
 sendHeartbeat(); 
 setInterval(sendHeartbeat, 20000);
-
 window.addEventListener('load', function() {
     const badge = document.getElementById('onlineBadge');
     badge.style.animation = 'onlineFlash 0.8s ease';
-    setTimeout(() => {
-        badge.style.animation = '';
-    }, 1000);
+    setTimeout(() => { badge.style.animation = ''; }, 1000);
 });
 
 async function refreshAuthUI() {
     const res = await fetch('/api/me'); const data = await res.json(); const authDiv = document.getElementById('authSection'); const cartLink = document.getElementById('cartLink');
-    if(data.logged_in) { authDiv.innerHTML = `<span style="color:var(--orange-primary); font-weight:600;">${data.username}</span> <button id="logoutBtn" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; border:none; cursor:pointer; font-weight:600;">خروج</button>`; document.getElementById('logoutBtn')?.addEventListener('click', async () => { await fetch('/api/logout', {method:'POST'}); window.location.reload(); }); cartLink.style.display = 'inline-block'; updateCartUI(); }
-    else { authDiv.innerHTML = `<a href="/login" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; text-decoration:none; font-weight:600;">ورود</a>`; cartLink.style.display = 'none'; }
+    if(data.logged_in) { 
+        authDiv.innerHTML = `<span style="color:var(--orange-primary); font-weight:600;">${data.username}</span> <button id="logoutBtn" style="background:rgba(249,115,22,0.1); color:var(--orange-primary); padding:4px 14px; border-radius:40px; border:none; cursor:pointer; font-weight:600; transition:all 0.3s;">خروج</button>`; 
+        document.getElementById('logoutBtn')?.addEventListener('click', async () => { await fetch('/api/logout', {method:'POST'}); window.location.reload(); }); 
+        cartLink.style.display = 'inline-block'; updateCartUI(); 
+    } else { 
+        authDiv.innerHTML = `<a href="/login" style="background:rgba(249,115,22,0.1); color:var(--orange-primary); padding:4px 14px; border-radius:40px; text-decoration:none; font-weight:600;">ورود</a>`; 
+        cartLink.style.display = 'none'; 
+    }
 }
 async function updateCartUI() { const res = await fetch('/api/cart').catch(()=>{}); if(res && res.ok) { const data = await res.json(); document.getElementById('cartCount').innerText = data.item_count || 0; } }
 refreshAuthUI();
@@ -2947,16 +3155,12 @@ async function loadTeamMembers() {
         });
         container.innerHTML = html;
         const teamObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
+            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); } });
         }, { threshold: 0.1 });
         document.querySelectorAll('.team-card').forEach(card => teamObserver.observe(card));
     } catch(e) {
-        console.error('خطا در بارگذاری تیم:', e);
-        document.getElementById('teamGrid').innerHTML = '<div style="text-align:center;color:red;">خطا در بارگذاری اطلاعات تیم</div>';
+        console.error('خطا:', e);
+        document.getElementById('teamGrid').innerHTML = '<div style="text-align:center;color:#ef4444;">خطا در بارگذاری اطلاعات تیم</div>';
     }
 }
 loadTeamMembers();
@@ -2972,26 +3176,16 @@ function animateCounter(elementId, target, suffix = '') {
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 1.5);
         current = Math.floor(eased * target);
-        if (target === 4.9) {
-            counter.textContent = (current / 10).toFixed(1);
-        } else {
-            counter.textContent = current.toLocaleString('en-US');
-        }
-        if (progress < 1) {
-            requestAnimationFrame(updateCounter);
-        } else {
-            if (target === 4.9) {
-                counter.textContent = '4.9';
-            } else {
-                counter.textContent = target.toLocaleString('en-US') + suffix;
-            }
+        if (target === 4.9) { counter.textContent = (current / 10).toFixed(1); }
+        else { counter.textContent = current.toLocaleString('en-US'); }
+        if (progress < 1) { requestAnimationFrame(updateCounter); }
+        else {
+            if (target === 4.9) { counter.textContent = '4.9'; }
+            else { counter.textContent = target.toLocaleString('en-US') + suffix; }
         }
     }
-    setTimeout(() => {
-        requestAnimationFrame(updateCounter);
-    }, 300);
+    setTimeout(() => { requestAnimationFrame(updateCounter); }, 300);
 }
-
 const statsObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -3004,31 +3198,23 @@ const statsObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.3 });
 document.querySelectorAll('.stats-section').forEach(el => statsObserver.observe(el));
 
-const observerOptions = { threshold: 0.2, rootMargin: '0px 0px -50px 0px' };
+const observerOptions = { threshold: 0.15, rootMargin: '0px 0px -30px 0px' };
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-        } else {
-            entry.target.classList.remove('visible');
-        }
+        if (entry.isIntersecting) { entry.target.classList.add('visible'); }
+        else { entry.target.classList.remove('visible'); }
     });
 }, observerOptions);
 document.querySelectorAll('.scroll-animate').forEach(el => observer.observe(el));
 
 const faqDataHome = [
-    { q: "چگونه MarsClient را نصب کنم؟", a: "فایل نصاب را از دکمه دانلود دریافت کرده و اجرا کنید. مسیر نصب ماینکرفت را انتخاب کنید و پس از اتمام، لانچر را اجرا کنید." },
-    { q: "آیا با همه نسخه‌های ماینکرفت سازگار است؟", a: "بله! MarsClient از نسخه ۱.۷ تا آخرین نسخه ماینکرفت را پشتیبانی می‌کند." },
-    { q: "لانچر اختصاصی MarsClient چه قابلیت‌هایی دارد؟", a: "مدیریت مادها، دانلود خودکار نسخه‌ها، پشتیبانی از چند پروفایل، آپدیت خودکار و رابط کاربری زیبا." },
-    { q: "چگونه FPS را افزایش دهم؟", a: "در تنظیمات گرافیکی کلاینت، گزینه‌های Performance Mode و Smooth FPS را فعال کنید." },
-    { q: "آیا کلاینت رایگان است؟", a: "بله، کلاینت اصلی رایگان است. کازمتیک‌های فروشگاه دارای هزینه نمادین هستند." },
-    { q: "چگونه ماد اضافه کنم؟", a: "از طریق لانچر اختصاصی MarsClient می‌توانید مادها را به راحتی مدیریت و نصب کنید." },
-    { q: "گزارش باگ؟", a: "از طریق تیکت پشتیبانی در وبسایت یا دیسکورد." }
+    { q: "چگونه MarsClient را نصب کنم؟", a: "فایل نصاب را از دکمه دانلود دریافت کرده و اجرا کنید." },
+    { q: "آیا با همه نسخه‌های ماینکرفت سازگار است؟", a: "بله! از نسخه ۱.۷ تا آخرین نسخه را پشتیبانی می‌کند." },
+    { q: "لانچر اختصاصی MarsClient چه قابلیت‌هایی دارد؟", a: "مدیریت مادها، دانلود خودکار نسخه‌ها." },
+    { q: "چگونه FPS را افزایش دهم؟", a: "Performance Mode را در تنظیمات فعال کنید." }
 ];
 let currentTabHome = 'faq';
-let supportUserNameHome = '';
-let supportUserPhoneHome = '';
-let chatHistoryHome = [];
+let supportUserNameHome = '', supportUserPhoneHome = '', chatHistoryHome = [];
 
 function renderFaqContentHome() {
     const container = document.getElementById('faqContent');
@@ -3040,21 +3226,17 @@ function renderFaqContentHome() {
     } else {
         if (!supportUserNameHome || !supportUserPhoneHome) {
             container.innerHTML = `<div class="support-init"><input type="text" id="supportName" placeholder="نام و نام خانوادگی"><input type="tel" id="supportPhone" placeholder="شماره تماس"><button onclick="startSupportChatHome()">شروع گفتگو</button></div>`;
-        } else {
-            renderChatHome();
-        }
+        } else { renderChatHome(); }
     }
 }
-
 function startSupportChatHome() {
     const name = document.getElementById('supportName')?.value.trim();
     const phone = document.getElementById('supportPhone')?.value.trim();
     if (!name || !phone) { alert('لطفاً نام و شماره تماس را وارد کنید'); return; }
     supportUserNameHome = name; supportUserPhoneHome = phone; chatHistoryHome = [];
-    setTimeout(() => { addBotMessageHome("سلام! به پشتیبانی MarsClient خوش آمدید. لطفاً مشکل خود را مطرح کنید."); renderChatHome(); }, 500);
+    setTimeout(() => { addBotMessageHome("سلام! به پشتیبانی MarsClient خوش آمدید."); renderChatHome(); }, 500);
     renderFaqContentHome();
 }
-
 function renderChatHome() {
     const container = document.getElementById('faqContent');
     let messagesHtml = '<div class="chat-container"><div class="chat-messages" id="chatMessages">';
@@ -3064,26 +3246,23 @@ function renderChatHome() {
     const msgDiv = document.getElementById('chatMessages'); if (msgDiv) msgDiv.scrollTop = msgDiv.scrollHeight;
     const input = document.getElementById('chatInput'); if (input) input.focus();
 }
-
 function addUserMessageHome(text) { chatHistoryHome.push({ sender: 'user', text: text, timestamp: Date.now() }); renderChatHome(); }
 function addBotMessageHome(text) { chatHistoryHome.push({ sender: 'bot', text: text, timestamp: Date.now() }); renderChatHome(); }
-
 function sendMessageHome() {
     const input = document.getElementById('chatInput'); const message = input.value.trim();
     if (!message) return;
     addUserMessageHome(message); input.value = '';
     const lowerMsg = message.toLowerCase();
     let reply = "";
-    if (lowerMsg.includes('نصب') || lowerMsg.includes('install')) { reply = "برای نصب MarsClient، فایل نصاب را از دکمه دانلود دریافت کنید. پس از اجرا، مسیر ماینکرفت را انتخاب کنید."; }
-    else if (lowerMsg.includes('خرید') || lowerMsg.includes('price') || lowerMsg.includes('قیمت')) { reply = "برای خرید آیتم‌های فروشگاه، ابتدا وارد حساب شوید، سپس محصول را به سبد خرید اضافه کرده و پرداخت را انجام دهید."; }
-    else if (lowerMsg.includes('fps') || lowerMsg.includes('کاهش') || lowerMsg.includes('lag')) { reply = "برای افزایش FPS، در تنظیمات گرافیکی Performance Mode را فعال کنید."; }
-    else if (lowerMsg.includes('تشکر') || lowerMsg.includes('ممنون')) { reply = "خواهش می‌کنم! خوشحالیم که می‌توانیم کمک کنیم."; }
-    else { reply = "درخواست شما ثبت شد. همکاران ما به زودی پاسخ می‌دهند."; }
-    setTimeout(() => addBotMessageHome(reply), 800);
+    if (lowerMsg.includes('نصب')) { reply = "فایل نصاب را از دکمه دانلود دریافت کنید."; }
+    else if (lowerMsg.includes('خرید')) { reply = "وارد حساب شوید و به فروشگاه بروید."; }
+    else if (lowerMsg.includes('fps')) { reply = "Performance Mode را در تنظیمات فعال کنید."; }
+    else if (lowerMsg.includes('تشکر')) { reply = "خواهش می‌کنم!"; }
+    else { reply = "درخواست شما ثبت شد."; }
+    setTimeout(() => addBotMessageHome(reply), 600);
 }
-
 function showAnswerHome(el, answer) { const answerDiv = document.getElementById('faqAnswer'); if (!answerDiv) return; answerDiv.innerHTML = answer; answerDiv.classList.add('show'); }
-function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.classList.toggle('active'); if (panel.classList.contains('active')) { renderFaqContentHome(); const faqTabBtn = document.getElementById('faqTabBtn'); const supportTabBtn = document.getElementById('supportTabBtn'); faqTabBtn.onclick = () => { currentTabHome = 'faq'; renderFaqContentHome(); faqTabBtn.classList.add('active'); supportTabBtn.classList.remove('active'); }; supportTabBtn.onclick = () => { currentTabHome = 'support'; renderFaqContentHome(); supportTabBtn.classList.add('active'); faqTabBtn.classList.remove('active'); }; if (currentTabHome === 'support' && supportUserNameHome && supportUserPhoneHome) { renderChatHome(); } } }
+function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.classList.toggle('active'); if (panel.classList.contains('active')) { renderFaqContentHome(); const faqTabBtn = document.getElementById('faqTabBtn'); const supportTabBtn = document.getElementById('supportTabBtn'); faqTabBtn.onclick = () => { currentTabHome = 'faq'; renderFaqContentHome(); faqTabBtn.classList.add('active'); supportTabBtn.classList.remove('active'); }; supportTabBtn.onclick = () => { currentTabHome = 'support'; renderFaqContentHome(); supportTabBtn.classList.add('active'); faqTabBtn.classList.remove('active'); }; } }
 </script>
 </body>
 </html>"""
@@ -3093,15 +3272,21 @@ SHOP_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>فروشگاه | MarsClient</title><style>{{ styles | safe }}</style></head>
 <body>
-<nav class="navbar">
+<nav class="navbar" id="navbar">
     <div class="nav-left">
-        <a href="/" class="logo animate-float">MarsClient</a>
+        <div class="logo-wrapper">
+            <a href="/" class="logo animate-float">MarsClient</a>
+            <span class="logo-icon">⚡</span>
+        </div>
     </div>
     <div class="nav-right">
         <div class="online-badge" id="onlineBadge">
             <span class="online-dot" id="onlineDot"></span>
             آنلاین: <span class="online-number" id="onlineCount">0</span> نفر
         </div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="تغییر تم">
+            <span id="themeIcon">🌙</span>
+        </button>
         <div class="hamburger-wrapper">
             <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="منو">
                 <span></span><span></span><span></span>
@@ -3111,54 +3296,54 @@ SHOP_TEMPLATE = """<!DOCTYPE html>
                 <a href="/shop">🛒 فروشگاه</a>
                 <a href="/login">🔑 ورود / ثبت‌نام</a>
                 <a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+                <div class="menu-divider"></div>
+                <button class="menu-theme-toggle" onclick="toggleTheme(); closeMobileMenu();">
+                    <span id="menuThemeIcon">🌙</span> تغییر تم
+                </button>
             </div>
         </div>
         <a href="/cart" class="cart-icon" id="cartLink" style="display: none;">🛒 <span id="cartCount">0</span></a>
-        <div id="authSection" style="display: flex; gap: 12px;"></div>
+        <div id="authSection" style="display: flex; gap: 8px;"></div>
     </div>
 </nav>
 
 <div id="downloadModal" class="modal">
     <div class="modal-content download-modal">
-        <span class="close" onclick="closeDownloadModal()">&times;</span>
-        <div class="download-modal-icon">🚀</div>
-        <h2 style="color:var(--orange-primary); margin-bottom:5px;">MarsClient Download</h2>
+        <button class="close" onclick="closeDownloadModal()">&times;</button>
+        <div class="download-modal-icon animate-float">🚀</div>
+        <h2 style="color:#e8e8e8;">MarsClient Download</h2>
         <p style="color:var(--text-soft); margin-bottom:20px;">کلاینت ماینکرفت نسل بعدی</p>
-        
         <div class="download-options">
-            <div class="download-option">
+            <div class="download-option animate-float-slow">
                 <div class="download-icon">🪟</div>
                 <div class="download-name">ویندوز</div>
                 <div class="download-version">Windows 10/11</div>
                 <button class="download-btn" onclick="showComingSoon('ویندوز')">به زودی ⏳</button>
             </div>
-            
-            <div class="download-option">
+            <div class="download-option animate-float-slow delay-1">
                 <div class="download-icon">🐧</div>
                 <div class="download-name">لینوکس</div>
                 <div class="download-version">Ubuntu / Debian</div>
                 <button class="download-btn" onclick="showComingSoon('لینوکس')">به زودی ⏳</button>
             </div>
-            
-            <div class="download-option">
+            <div class="download-option animate-float-slow delay-2">
                 <div class="download-icon">🍎</div>
                 <div class="download-name">مک</div>
                 <div class="download-version">macOS</div>
                 <button class="download-btn" onclick="showComingSoon('مک')">به زودی ⏳</button>
             </div>
         </div>
-        
-        <p style="color:#8899aa; font-size:0.8rem; margin-top:15px;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
+        <p style="color:#64748b; font-size:0.8rem;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
     </div>
 </div>
 
 <div id="comingSoonModal" class="modal">
     <div class="modal-content" style="max-width:350px;">
-        <span class="close" onclick="closeComingSoon()">&times;</span>
+        <button class="close" onclick="closeComingSoon()">&times;</button>
         <div style="text-align:center; padding:10px;">
-            <div style="font-size:4rem; margin-bottom:10px;">🔧</div>
+            <div style="font-size:4rem; margin-bottom:10px; animation: float 2s ease-in-out infinite;">🔧</div>
             <h3 style="color:var(--orange-primary);">در حال ساخت!</h3>
-            <p id="comingSoonText" style="color:var(--text-soft); margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
+            <p id="comingSoonText" style="color:#94a3b8; margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
             <button onclick="closeComingSoon()" class="btn" style="padding:10px 30px;">متوجه شدم</button>
         </div>
     </div>
@@ -3171,14 +3356,14 @@ SHOP_TEMPLATE = """<!DOCTYPE html>
     </div>
     <div class="category-menu" id="categoryMenu"></div>
     <div id="cosmeticsContainer" class="grid" style="margin-top:30px;">
-        <div style="text-align:center;width:100%;">در حال بارگذاری محصولات...</div>
+        <div style="text-align:center;width:100%;" class="animate-fade-scale">در حال بارگذاری محصولات...</div>
     </div>
 </section>
 
 <footer>
     <div class="footer-content">
         <div class="footer-stats">
-            <div class="footer-stat"><div class="footer-stat-value">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
+            <div class="footer-stat"><div class="footer-stat-value animate-glow">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
             <div class="footer-stat"><div class="footer-stat-value">۴۰+</div><div class="footer-stat-label">ماژول داخلی</div></div>
         </div>
         <div class="footer-copyright">© ۲۰۲۶ MarsClient — نسل بعدی موتور ماینکرفت</div>
@@ -3198,6 +3383,43 @@ SHOP_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <script>
+function toggleTheme() {
+    const body = document.body;
+    const themeIcon = document.getElementById('themeIcon');
+    const menuThemeIcon = document.getElementById('menuThemeIcon');
+    body.classList.toggle('light-mode');
+    if (body.classList.contains('light-mode')) {
+        themeIcon.textContent = '☀️';
+        menuThemeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+    } else {
+        themeIcon.textContent = '🌙';
+        menuThemeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    menu.classList.remove('active');
+    btn.classList.remove('active');
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('themeIcon').textContent = '☀️';
+        document.getElementById('menuThemeIcon').textContent = '☀️';
+    }
+});
+
+window.addEventListener('scroll', function() {
+    const navbar = document.getElementById('navbar');
+    if (window.scrollY > 50) { navbar.classList.add('scrolled'); }
+    else { navbar.classList.remove('scrolled'); }
+});
+
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
     const btn = document.getElementById('hamburgerBtn');
@@ -3213,92 +3435,62 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// ===== مودال دانلود =====
-function showDownloadModal() { 
-    document.getElementById('downloadModal').style.display='block'; 
-}
-
-function closeDownloadModal() { 
-    document.getElementById('downloadModal').style.display='none'; 
-}
-
-// ===== مودال "به زودی" =====
+function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
+function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
 function showComingSoon(os) {
     const modal = document.getElementById('comingSoonModal');
     const text = document.getElementById('comingSoonText');
-    const osNames = {
-        'ویندوز': 'ویندوز (Windows 10/11)',
-        'لینوکس': 'لینوکس (Ubuntu / Debian)',
-        'مک': 'مک (macOS)'
-    };
+    const osNames = {'ویندوز':'ویندوز (Windows 10/11)','لینوکس':'لینوکس (Ubuntu / Debian)','مک':'مک (macOS)'};
     text.textContent = `نسخه ${osNames[os] || os} به زودی منتشر می‌شود`;
     modal.style.display = 'block';
 }
-
-function closeComingSoon() {
-    document.getElementById('comingSoonModal').style.display='none';
-}
-
-// بستن مودال با کلیک خارج از آن
+function closeComingSoon() { document.getElementById('comingSoonModal').style.display='none'; }
 window.onclick = function(event) {
-    const modal1 = document.getElementById('downloadModal');
-    const modal2 = document.getElementById('comingSoonModal');
-    if (event.target == modal1) modal1.style.display = 'none';
-    if (event.target == modal2) modal2.style.display = 'none';
+    if (event.target == document.getElementById('downloadModal')) document.getElementById('downloadModal').style.display='none';
+    if (event.target == document.getElementById('comingSoonModal')) document.getElementById('comingSoonModal').style.display='none';
 }
 
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
 let onlineCount = 0;
-
 function sendHeartbeat() { 
     fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) })
-    .then(r=>r.json())
-    .then(data=>{ 
+    .then(r=>r.json()).then(data=>{ 
         if(data.online_count !== undefined) {
             const oldCount = onlineCount;
             onlineCount = data.online_count;
             document.getElementById('onlineCount').innerText = onlineCount;
-            if(onlineCount < oldCount || onlineCount === 0) {
-                flashOffline();
-            }
+            if(onlineCount < oldCount || onlineCount === 0) { flashOffline(); }
         }
-    })
-    .catch(e=>console.warn); 
+    }).catch(e=>console.warn); 
 }
-
 function flashOffline() {
     const badge = document.getElementById('onlineBadge');
     const dot = document.getElementById('onlineDot');
     badge.classList.add('offline-flash');
     dot.classList.add('offline');
-    setTimeout(() => {
-        badge.classList.remove('offline-flash');
-        dot.classList.remove('offline');
-    }, 1200);
+    setTimeout(() => { badge.classList.remove('offline-flash'); dot.classList.remove('offline'); }, 1200);
 }
-
-function sendLeave() { 
-    navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId}));
-    flashOffline();
-}
-
+function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); flashOffline(); }
 window.addEventListener('beforeunload', sendLeave);
 sendHeartbeat(); 
 setInterval(sendHeartbeat, 20000);
-
 window.addEventListener('load', function() {
     const badge = document.getElementById('onlineBadge');
     badge.style.animation = 'onlineFlash 0.8s ease';
-    setTimeout(() => {
-        badge.style.animation = '';
-    }, 1000);
+    setTimeout(() => { badge.style.animation = ''; }, 1000);
 });
 
 async function refreshAuthUI() {
     const res = await fetch('/api/me'); const data = await res.json(); const authDiv = document.getElementById('authSection'); const cartLink = document.getElementById('cartLink');
-    if(data.logged_in) { authDiv.innerHTML = `<span style="color:var(--orange-primary); font-weight:600;">${data.username}</span> <button id="logoutBtn" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; border:none; cursor:pointer; font-weight:600;">خروج</button>`; document.getElementById('logoutBtn')?.addEventListener('click', async () => { await fetch('/api/logout', {method:'POST'}); window.location.reload(); }); cartLink.style.display = 'inline-block'; updateCartUI(); }
-    else { authDiv.innerHTML = `<a href="/login" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; text-decoration:none; font-weight:600;">ورود</a>`; cartLink.style.display = 'none'; }
+    if(data.logged_in) { 
+        authDiv.innerHTML = `<span style="color:var(--orange-primary); font-weight:600;">${data.username}</span> <button id="logoutBtn" style="background:rgba(249,115,22,0.1); color:var(--orange-primary); padding:4px 14px; border-radius:40px; border:none; cursor:pointer; font-weight:600;">خروج</button>`; 
+        document.getElementById('logoutBtn')?.addEventListener('click', async () => { await fetch('/api/logout', {method:'POST'}); window.location.reload(); }); 
+        cartLink.style.display = 'inline-block'; updateCartUI(); 
+    } else { 
+        authDiv.innerHTML = `<a href="/login" style="background:rgba(249,115,22,0.1); color:var(--orange-primary); padding:4px 14px; border-radius:40px; text-decoration:none; font-weight:600;">ورود</a>`; 
+        cartLink.style.display = 'none'; 
+    }
 }
 async function updateCartUI() { const res = await fetch('/api/cart').catch(()=>{}); if(res && res.ok) { const data = await res.json(); document.getElementById('cartCount').innerText = data.item_count || 0; } }
 refreshAuthUI();
@@ -3306,10 +3498,9 @@ refreshAuthUI();
 function addToCart(item) {
     fetch('/api/cart/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(item) })
     .then(r=>{ if(r.status===401) { alert('لطفاً وارد شوید'); window.location.href='/login'; return; } return r.json(); })
-    .then(data => { if(data && data.success) { updateCartUI(); alert(`${item.name} به سبد خرید اضافه شد`); } })
+    .then(data => { if(data && data.success) { updateCartUI(); alert(`${item.name} به سبد خرید اضافه شد ✅`); } })
     .catch(err=>console.error);
 }
-
 let allCosmetics = {};
 async function loadCosmetics() {
     try {
@@ -3321,7 +3512,6 @@ async function loadCosmetics() {
         else document.getElementById('cosmeticsContainer').innerHTML = '<div style="text-align:center;">هیچ محصولی یافت نشد</div>';
     } catch(e) { console.error(e); }
 }
-
 function buildCategoryMenu() {
     const menuDiv = document.getElementById('categoryMenu');
     let html = '';
@@ -3336,12 +3526,10 @@ function buildCategoryMenu() {
         showCategory(btn.dataset.cat);
     }));
 }
-
 function getCategoryPersianName(key) {
     const names = { 'pets':'حیوانات خانگی', 'glasses':'عینک', 'hats':'کلاه', 'masks':'ماسک', 'wings':'بال', 'capes':'شنل', 'bag':'کیف', 'necklace':'گردنبند' };
     return names[key] || key;
 }
-
 function showCategory(categoryKey) {
     let items = allCosmetics[categoryKey] || [];
     const container = document.getElementById('cosmeticsContainer');
@@ -3350,7 +3538,7 @@ function showCategory(categoryKey) {
     for (const item of items) {
         let priceFormatted = item.price.toLocaleString();
         let oldPrice = (item.price * 1.5).toLocaleString();
-        html += `<div class="cosmetic-card">
+        html += `<div class="cosmetic-card animate-fade-scale" style="animation-delay: ${Math.random() * 0.3}s">
             <div class="cosmetic-img"><img src="${item.image}" alt="${item.name}" onerror="this.src='https://placehold.co/200x200/f97316/white?text=🔸'"></div>
             <div class="cosmetic-info">
                 <div class="cosmetic-name">${item.name}</div>
@@ -3364,16 +3552,13 @@ function showCategory(categoryKey) {
 loadCosmetics();
 
 const faqDataShop = [
-    { q: "چگونه MarsClient را نصب کنم؟", a: "فایل نصاب را از دکمه دانلود دریافت کرده و اجرا کنید. مسیر نصب ماینکرفت را انتخاب کنید و پس از اتمام، لانچر را اجرا کنید." },
-    { q: "آیا با همه نسخه‌های ماینکرفت سازگار است؟", a: "بله! MarsClient از نسخه ۱.۷ تا آخرین نسخه ماینکرفت را پشتیبانی می‌کند." },
-    { q: "لانچر اختصاصی MarsClient چه قابلیت‌هایی دارد؟", a: "مدیریت مادها، دانلود خودکار نسخه‌ها، پشتیبانی از چند پروفایل، آپدیت خودکار و رابط کاربری زیبا." },
-    { q: "چگونه FPS را افزایش دهم؟", a: "در تنظیمات گرافیکی کلاینت، گزینه‌های Performance Mode و Smooth FPS را فعال کنید." },
-    { q: "آیا کلاینت رایگان است؟", a: "بله، کلاینت اصلی رایگان است. کازمتیک‌های فروشگاه دارای هزینه نمادین هستند." }
+    { q: "چگونه MarsClient را نصب کنم؟", a: "فایل نصاب را از دکمه دانلود دریافت کنید." },
+    { q: "آیا با همه نسخه‌های ماینکرفت سازگار است؟", a: "بله! از نسخه ۱.۷ تا آخرین نسخه." },
+    { q: "لانچر اختصاصی MarsClient چه قابلیت‌هایی دارد؟", a: "مدیریت مادها، دانلود خودکار نسخه‌ها." },
+    { q: "چگونه FPS را افزایش دهم؟", a: "Performance Mode را فعال کنید." }
 ];
 let currentTabShop = 'faq';
-let supportUserNameShop = '';
-let supportUserPhoneShop = '';
-let chatHistoryShop = [];
+let supportUserNameShop = '', supportUserPhoneShop = '', chatHistoryShop = [];
 
 function renderFaqContentShop() {
     const container = document.getElementById('faqContent');
@@ -3385,21 +3570,17 @@ function renderFaqContentShop() {
     } else {
         if (!supportUserNameShop || !supportUserPhoneShop) {
             container.innerHTML = `<div class="support-init"><input type="text" id="supportName" placeholder="نام و نام خانوادگی"><input type="tel" id="supportPhone" placeholder="شماره تماس"><button onclick="startSupportChatShop()">شروع گفتگو</button></div>`;
-        } else {
-            renderChatShop();
-        }
+        } else { renderChatShop(); }
     }
 }
-
 function startSupportChatShop() {
     const name = document.getElementById('supportName')?.value.trim();
     const phone = document.getElementById('supportPhone')?.value.trim();
     if (!name || !phone) { alert('لطفاً نام و شماره تماس را وارد کنید'); return; }
     supportUserNameShop = name; supportUserPhoneShop = phone; chatHistoryShop = [];
-    setTimeout(() => { addBotMessageShop("سلام! به پشتیبانی MarsClient خوش آمدید. لطفاً مشکل خود را مطرح کنید."); renderChatShop(); }, 500);
+    setTimeout(() => { addBotMessageShop("سلام! به پشتیبانی MarsClient خوش آمدید."); renderChatShop(); }, 500);
     renderFaqContentShop();
 }
-
 function renderChatShop() {
     const container = document.getElementById('faqContent');
     let messagesHtml = '<div class="chat-container"><div class="chat-messages" id="chatMessages">';
@@ -3409,26 +3590,23 @@ function renderChatShop() {
     const msgDiv = document.getElementById('chatMessages'); if (msgDiv) msgDiv.scrollTop = msgDiv.scrollHeight;
     const input = document.getElementById('chatInput'); if (input) input.focus();
 }
-
 function addUserMessageShop(text) { chatHistoryShop.push({ sender: 'user', text: text, timestamp: Date.now() }); renderChatShop(); }
 function addBotMessageShop(text) { chatHistoryShop.push({ sender: 'bot', text: text, timestamp: Date.now() }); renderChatShop(); }
-
 function sendMessageShop() {
     const input = document.getElementById('chatInput'); const message = input.value.trim();
     if (!message) return;
     addUserMessageShop(message); input.value = '';
     const lowerMsg = message.toLowerCase();
     let reply = "";
-    if (lowerMsg.includes('نصب') || lowerMsg.includes('install')) { reply = "برای نصب MarsClient، فایل نصاب را از دکمه دانلود دریافت کنید. پس از اجرا، مسیر ماینکرفت را انتخاب کنید."; }
-    else if (lowerMsg.includes('خرید') || lowerMsg.includes('price') || lowerMsg.includes('قیمت')) { reply = "برای خرید آیتم‌های فروشگاه، ابتدا وارد حساب شوید، سپس محصول را به سبد خرید اضافه کرده و پرداخت را انجام دهید."; }
-    else if (lowerMsg.includes('fps') || lowerMsg.includes('کاهش') || lowerMsg.includes('lag')) { reply = "برای افزایش FPS، در تنظیمات گرافیکی Performance Mode را فعال کنید."; }
-    else if (lowerMsg.includes('تشکر') || lowerMsg.includes('ممنون')) { reply = "خواهش می‌کنم! خوشحالیم که می‌توانیم کمک کنیم."; }
-    else { reply = "درخواست شما ثبت شد. همکاران ما به زودی پاسخ می‌دهند."; }
-    setTimeout(() => addBotMessageShop(reply), 800);
+    if (lowerMsg.includes('نصب')) { reply = "فایل نصاب را از دکمه دانلود دریافت کنید."; }
+    else if (lowerMsg.includes('خرید')) { reply = "وارد حساب شوید و به فروشگاه بروید."; }
+    else if (lowerMsg.includes('fps')) { reply = "Performance Mode را فعال کنید."; }
+    else if (lowerMsg.includes('تشکر')) { reply = "خواهش می‌کنم!"; }
+    else { reply = "درخواست شما ثبت شد."; }
+    setTimeout(() => addBotMessageShop(reply), 600);
 }
-
 function showAnswerShop(el, answer) { const answerDiv = document.getElementById('faqAnswer'); if (!answerDiv) return; answerDiv.innerHTML = answer; answerDiv.classList.add('show'); }
-function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.classList.toggle('active'); if (panel.classList.contains('active')) { renderFaqContentShop(); const faqTabBtn = document.getElementById('faqTabBtn'); const supportTabBtn = document.getElementById('supportTabBtn'); faqTabBtn.onclick = () => { currentTabShop = 'faq'; renderFaqContentShop(); faqTabBtn.classList.add('active'); supportTabBtn.classList.remove('active'); }; supportTabBtn.onclick = () => { currentTabShop = 'support'; renderFaqContentShop(); supportTabBtn.classList.add('active'); faqTabBtn.classList.remove('active'); }; if (currentTabShop === 'support' && supportUserNameShop && supportUserPhoneShop) { renderChatShop(); } } }
+function toggleFaq() { const panel = document.getElementById('faqPanel'); panel.classList.toggle('active'); if (panel.classList.contains('active')) { renderFaqContentShop(); const faqTabBtn = document.getElementById('faqTabBtn'); const supportTabBtn = document.getElementById('supportTabBtn'); faqTabBtn.onclick = () => { currentTabShop = 'faq'; renderFaqContentShop(); faqTabBtn.classList.add('active'); supportTabBtn.classList.remove('active'); }; supportTabBtn.onclick = () => { currentTabShop = 'support'; renderFaqContentShop(); supportTabBtn.classList.add('active'); faqTabBtn.classList.remove('active'); }; } }
 </script>
 </body>
 </html>"""
@@ -3438,15 +3616,21 @@ CART_TEMPLATE = """<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>سبد خرید | MarsClient</title><style>{{ styles | safe }}</style></head>
 <body>
-<nav class="navbar">
+<nav class="navbar" id="navbar">
     <div class="nav-left">
-        <a href="/" class="logo animate-float">MarsClient</a>
+        <div class="logo-wrapper">
+            <a href="/" class="logo animate-float">MarsClient</a>
+            <span class="logo-icon">⚡</span>
+        </div>
     </div>
     <div class="nav-right">
         <div class="online-badge" id="onlineBadge">
             <span class="online-dot" id="onlineDot"></span>
             آنلاین: <span class="online-number" id="onlineCount">0</span> نفر
         </div>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="تغییر تم">
+            <span id="themeIcon">🌙</span>
+        </button>
         <div class="hamburger-wrapper">
             <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileMenu()" aria-label="منو">
                 <span></span><span></span><span></span>
@@ -3456,54 +3640,54 @@ CART_TEMPLATE = """<!DOCTYPE html>
                 <a href="/shop">🛒 فروشگاه</a>
                 <a href="/login">🔑 ورود / ثبت‌نام</a>
                 <a href="https://reymit.ir/marsclient" target="_blank" class="support-link">❤️ حمایت</a>
+                <div class="menu-divider"></div>
+                <button class="menu-theme-toggle" onclick="toggleTheme(); closeMobileMenu();">
+                    <span id="menuThemeIcon">🌙</span> تغییر تم
+                </button>
             </div>
         </div>
         <a href="/cart" class="cart-icon">🛒 <span id="cartCount">0</span></a>
-        <div id="authSection" style="display: flex; gap: 12px;"></div>
+        <div id="authSection" style="display: flex; gap: 8px;"></div>
     </div>
 </nav>
 
 <div id="downloadModal" class="modal">
     <div class="modal-content download-modal">
-        <span class="close" onclick="closeDownloadModal()">&times;</span>
-        <div class="download-modal-icon">🚀</div>
-        <h2 style="color:var(--orange-primary); margin-bottom:5px;">MarsClient Download</h2>
+        <button class="close" onclick="closeDownloadModal()">&times;</button>
+        <div class="download-modal-icon animate-float">🚀</div>
+        <h2 style="color:#e8e8e8;">MarsClient Download</h2>
         <p style="color:var(--text-soft); margin-bottom:20px;">کلاینت ماینکرفت نسل بعدی</p>
-        
         <div class="download-options">
-            <div class="download-option">
+            <div class="download-option animate-float-slow">
                 <div class="download-icon">🪟</div>
                 <div class="download-name">ویندوز</div>
                 <div class="download-version">Windows 10/11</div>
                 <button class="download-btn" onclick="showComingSoon('ویندوز')">به زودی ⏳</button>
             </div>
-            
-            <div class="download-option">
+            <div class="download-option animate-float-slow delay-1">
                 <div class="download-icon">🐧</div>
                 <div class="download-name">لینوکس</div>
                 <div class="download-version">Ubuntu / Debian</div>
                 <button class="download-btn" onclick="showComingSoon('لینوکس')">به زودی ⏳</button>
             </div>
-            
-            <div class="download-option">
+            <div class="download-option animate-float-slow delay-2">
                 <div class="download-icon">🍎</div>
                 <div class="download-name">مک</div>
                 <div class="download-version">macOS</div>
                 <button class="download-btn" onclick="showComingSoon('مک')">به زودی ⏳</button>
             </div>
         </div>
-        
-        <p style="color:#8899aa; font-size:0.8rem; margin-top:15px;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
+        <p style="color:#64748b; font-size:0.8rem;">🔹 نسخه بتا v1.0 - به زودی منتشر می‌شود</p>
     </div>
 </div>
 
 <div id="comingSoonModal" class="modal">
     <div class="modal-content" style="max-width:350px;">
-        <span class="close" onclick="closeComingSoon()">&times;</span>
+        <button class="close" onclick="closeComingSoon()">&times;</button>
         <div style="text-align:center; padding:10px;">
-            <div style="font-size:4rem; margin-bottom:10px;">🔧</div>
+            <div style="font-size:4rem; margin-bottom:10px; animation: float 2s ease-in-out infinite;">🔧</div>
             <h3 style="color:var(--orange-primary);">در حال ساخت!</h3>
-            <p id="comingSoonText" style="color:var(--text-soft); margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
+            <p id="comingSoonText" style="color:#94a3b8; margin:10px 0;">نسخه ویندوز به زودی منتشر می‌شود</p>
             <button onclick="closeComingSoon()" class="btn" style="padding:10px 30px;">متوجه شدم</button>
         </div>
     </div>
@@ -3518,7 +3702,7 @@ CART_TEMPLATE = """<!DOCTYPE html>
 <footer>
     <div class="footer-content">
         <div class="footer-stats">
-            <div class="footer-stat"><div class="footer-stat-value">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
+            <div class="footer-stat"><div class="footer-stat-value animate-glow">۴.۹</div><div class="footer-stat-label">امتیاز کاربران</div></div>
             <div class="footer-stat"><div class="footer-stat-value">۴۰+</div><div class="footer-stat-label">ماژول داخلی</div></div>
         </div>
         <div class="footer-copyright">© ۲۰۲۶ MarsClient — نسل بعدی موتور ماینکرفت</div>
@@ -3526,6 +3710,43 @@ CART_TEMPLATE = """<!DOCTYPE html>
 </footer>
 
 <script>
+function toggleTheme() {
+    const body = document.body;
+    const themeIcon = document.getElementById('themeIcon');
+    const menuThemeIcon = document.getElementById('menuThemeIcon');
+    body.classList.toggle('light-mode');
+    if (body.classList.contains('light-mode')) {
+        themeIcon.textContent = '☀️';
+        menuThemeIcon.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+    } else {
+        themeIcon.textContent = '🌙';
+        menuThemeIcon.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+function closeMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburgerBtn');
+    menu.classList.remove('active');
+    btn.classList.remove('active');
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('themeIcon').textContent = '☀️';
+        document.getElementById('menuThemeIcon').textContent = '☀️';
+    }
+});
+
+window.addEventListener('scroll', function() {
+    const navbar = document.getElementById('navbar');
+    if (window.scrollY > 50) { navbar.classList.add('scrolled'); }
+    else { navbar.classList.remove('scrolled'); }
+});
+
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
     const btn = document.getElementById('hamburgerBtn');
@@ -3541,86 +3762,50 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// ===== مودال دانلود =====
-function showDownloadModal() { 
-    document.getElementById('downloadModal').style.display='block'; 
-}
-
-function closeDownloadModal() { 
-    document.getElementById('downloadModal').style.display='none'; 
-}
-
-// ===== مودال "به زودی" =====
+function showDownloadModal() { document.getElementById('downloadModal').style.display='block'; }
+function closeDownloadModal() { document.getElementById('downloadModal').style.display='none'; }
 function showComingSoon(os) {
     const modal = document.getElementById('comingSoonModal');
     const text = document.getElementById('comingSoonText');
-    const osNames = {
-        'ویندوز': 'ویندوز (Windows 10/11)',
-        'لینوکس': 'لینوکس (Ubuntu / Debian)',
-        'مک': 'مک (macOS)'
-    };
+    const osNames = {'ویندوز':'ویندوز (Windows 10/11)','لینوکس':'لینوکس (Ubuntu / Debian)','مک':'مک (macOS)'};
     text.textContent = `نسخه ${osNames[os] || os} به زودی منتشر می‌شود`;
     modal.style.display = 'block';
 }
-
-function closeComingSoon() {
-    document.getElementById('comingSoonModal').style.display='none';
-}
-
-// بستن مودال با کلیک خارج از آن
+function closeComingSoon() { document.getElementById('comingSoonModal').style.display='none'; }
 window.onclick = function(event) {
-    const modal1 = document.getElementById('downloadModal');
-    const modal2 = document.getElementById('comingSoonModal');
-    if (event.target == modal1) modal1.style.display = 'none';
-    if (event.target == modal2) modal2.style.display = 'none';
+    if (event.target == document.getElementById('downloadModal')) document.getElementById('downloadModal').style.display='none';
+    if (event.target == document.getElementById('comingSoonModal')) document.getElementById('comingSoonModal').style.display='none';
 }
 
 let sessionId = localStorage.getItem('marsclient_session');
 if (!sessionId) { sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36); localStorage.setItem('marsclient_session', sessionId); }
 let onlineCount = 0;
-
 function sendHeartbeat() { 
     fetch('/api/heartbeat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:sessionId}) })
-    .then(r=>r.json())
-    .then(data=>{ 
+    .then(r=>r.json()).then(data=>{ 
         if(data.online_count !== undefined) {
             const oldCount = onlineCount;
             onlineCount = data.online_count;
             document.getElementById('onlineCount').innerText = onlineCount;
-            if(onlineCount < oldCount || onlineCount === 0) {
-                flashOffline();
-            }
+            if(onlineCount < oldCount || onlineCount === 0) { flashOffline(); }
         }
-    })
-    .catch(e=>console.warn); 
+    }).catch(e=>console.warn); 
 }
-
 function flashOffline() {
     const badge = document.getElementById('onlineBadge');
     const dot = document.getElementById('onlineDot');
     badge.classList.add('offline-flash');
     dot.classList.add('offline');
-    setTimeout(() => {
-        badge.classList.remove('offline-flash');
-        dot.classList.remove('offline');
-    }, 1200);
+    setTimeout(() => { badge.classList.remove('offline-flash'); dot.classList.remove('offline'); }, 1200);
 }
-
-function sendLeave() { 
-    navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId}));
-    flashOffline();
-}
-
+function sendLeave() { navigator.sendBeacon('/api/leave', JSON.stringify({session_id:sessionId})); flashOffline(); }
 window.addEventListener('beforeunload', sendLeave);
 sendHeartbeat(); 
 setInterval(sendHeartbeat, 20000);
-
 window.addEventListener('load', function() {
     const badge = document.getElementById('onlineBadge');
     badge.style.animation = 'onlineFlash 0.8s ease';
-    setTimeout(() => {
-        badge.style.animation = '';
-    }, 1000);
+    setTimeout(() => { badge.style.animation = ''; }, 1000);
 });
 
 let cartData = { items: [], total: 0 };
@@ -3636,26 +3821,26 @@ function renderCart() {
     const container = document.getElementById('cartItemsContainer'); 
     const totalDiv = document.getElementById('cartTotal'); 
     if (!cartData.items.length) { 
-        container.innerHTML = '<div style="text-align:center; padding:40px;">سبد خرید شما خالی است. <a href="/shop" style="color:var(--orange-primary);">بازگشت به فروشگاه</a></div>'; 
+        container.innerHTML = '<div style="text-align:center; padding:40px; animation: fadeInScale 0.4s ease; color:#94a3b8;">سبد خرید شما خالی است. <a href="/shop" style="color:var(--orange-primary); font-weight:600;">بازگشت به فروشگاه 🛒</a></div>'; 
         totalDiv.innerHTML = ''; 
         return; 
     } 
     let html = '<div style="display:flex; flex-direction:column; gap:20px;">'; 
     for (let item of cartData.items) { 
-        html += `<div style="display:flex; align-items:center; gap:20px; background:var(--white-pure); padding:18px; border-radius:24px; border:1px solid var(--orange-light); box-shadow:var(--shadow-sm);">
+        html += `<div style="display:flex; align-items:center; gap:20px; background:rgba(255,255,255,0.03); padding:18px; border-radius:24px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 10px 30px rgba(0,0,0,0.1); animation: fadeInScale 0.3s ease;">
             <img src="${item.image}" style="width:70px; height:70px; object-fit:contain; border-radius:16px;">
-            <div style="flex:1;"><div><strong style="font-size:1.1rem;">${item.name}</strong></div><div style="color:var(--orange-primary); font-weight:700;">${item.price.toLocaleString()} تومان</div></div>
+            <div style="flex:1;"><div><strong style="font-size:1.1rem;color:#e8e8e8;">${item.name}</strong></div><div style="color:var(--orange-primary); font-weight:700;">${item.price.toLocaleString()} تومان</div></div>
             <div>
-                <button onclick="updateQuantity('${item.id}', ${item.quantity-1})" style="background:var(--orange-light); border:1px solid var(--orange-light); padding:6px 14px; border-radius:50px; cursor:pointer; font-weight:700;">-</button>
-                <span style="margin:0 12px; font-weight:700;">${item.quantity}</span>
-                <button onclick="updateQuantity('${item.id}', ${item.quantity+1})" style="background:var(--orange-light); border:1px solid var(--orange-light); padding:6px 14px; border-radius:50px; cursor:pointer; font-weight:700;">+</button>
-                <button onclick="removeItem('${item.id}')" style="background:var(--danger); border:none; padding:6px 14px; border-radius:50px; color:white; margin-left:12px; cursor:pointer;">حذف</button>
+                <button onclick="updateQuantity('${item.id}', ${item.quantity-1})" style="background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.15); color:var(--orange-primary); padding:6px 14px; border-radius:50px; cursor:pointer; font-weight:700; transition:all 0.2s;">-</button>
+                <span style="margin:0 12px; font-weight:700;color:#e8e8e8;">${item.quantity}</span>
+                <button onclick="updateQuantity('${item.id}', ${item.quantity+1})" style="background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.15); color:var(--orange-primary); padding:6px 14px; border-radius:50px; cursor:pointer; font-weight:700; transition:all 0.2s;">+</button>
+                <button onclick="removeItem('${item.id}')" style="background:rgba(239,68,68,0.1); border:none; color:#ef4444; padding:6px 14px; border-radius:50px; margin-left:12px; cursor:pointer; transition:all 0.2s;">حذف</button>
             </div>
         </div>`; 
     } 
     html += '</div>'; 
     container.innerHTML = html; 
-    totalDiv.innerHTML = `مجموع سبد خرید: <span style="color:var(--orange-primary); font-size:1.8rem;">${cartData.total.toLocaleString()}</span> تومان`; 
+    totalDiv.innerHTML = `مجموع سبد خرید: <span style="color:var(--orange-primary); font-size:1.8rem; animation: countUp 0.3s ease;">${cartData.total.toLocaleString()}</span> تومان`; 
 }
 async function updateQuantity(itemId, newQty) { 
     if (newQty < 1) { await removeItem(itemId); return; } 
@@ -3668,8 +3853,12 @@ async function removeItem(itemId) {
 }
 async function refreshAuthUI() { 
     const res = await fetch('/api/me'); const data = await res.json(); const authDiv = document.getElementById('authSection'); 
-    if(data.logged_in) { authDiv.innerHTML = `<span style="color:var(--orange-primary); font-weight:600;">${data.username}</span> <button id="logoutBtn" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; border:none; cursor:pointer; font-weight:600;">خروج</button>`; document.getElementById('logoutBtn')?.addEventListener('click', async () => { await fetch('/api/logout', {method:'POST'}); window.location.href = '/'; }); } 
-    else { authDiv.innerHTML = `<a href="/login" style="background:var(--orange-light); color:var(--orange-dark); padding:4px 12px; border-radius:40px; text-decoration:none; font-weight:600;">ورود</a>`; } 
+    if(data.logged_in) { 
+        authDiv.innerHTML = `<span style="color:var(--orange-primary); font-weight:600;">${data.username}</span> <button id="logoutBtn" style="background:rgba(249,115,22,0.1); color:var(--orange-primary); padding:4px 14px; border-radius:40px; border:none; cursor:pointer; font-weight:600;">خروج</button>`; 
+        document.getElementById('logoutBtn')?.addEventListener('click', async () => { await fetch('/api/logout', {method:'POST'}); window.location.href = '/'; }); 
+    } else { 
+        authDiv.innerHTML = `<a href="/login" style="background:rgba(249,115,22,0.1); color:var(--orange-primary); padding:4px 14px; border-radius:40px; text-decoration:none; font-weight:600;">ورود</a>`; 
+    } 
 }
 refreshAuthUI(); 
 loadCart();
